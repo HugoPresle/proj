@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mes Projets</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f9f9f7;
+      --surface: #ffffff;
+      --border: #e8e8e4;
+      --text: #1a1a18;
+      --muted: #888884;
+      --accent: #2563eb;
+      --accent-light: #eff4ff;
+      --radius: 10px;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 60px 20px;
+    }
+
+    header {
+      max-width: 680px;
+      margin: 0 auto 56px;
+    }
+
+    header h1 {
+      font-size: 1.75rem;
+      font-weight: 600;
+      letter-spacing: -0.03em;
+      margin-bottom: 8px;
+    }
+
+    header p {
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    .projects {
+      max-width: 680px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      text-decoration: none;
+      color: inherit;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-light);
+    }
+
+    .card-left {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .card-name {
+      font-weight: 500;
+      font-size: 0.975rem;
+    }
+
+    .card-desc {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .card-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      background: var(--accent-light);
+      color: var(--accent);
+      padding: 3px 8px;
+      border-radius: 4px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .arrow {
+      color: var(--muted);
+      font-size: 1rem;
+      flex-shrink: 0;
+      transition: transform 0.15s, color 0.15s;
+    }
+
+    .card:hover .arrow {
+      transform: translateX(3px);
+      color: var(--accent);
+    }
+
+    footer {
+      max-width: 680px;
+      margin: 48px auto 0;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    /* ── AJOUTE TES PROJETS ICI ─────────────────────────────────────────
+       Duplique un bloc <a class="card"> pour chaque nouveau projet.
+       - href       → l'URL de ton projet (ex: https://mon-projet.pages.dev)
+       - card-name  → le nom affiché
+       - card-desc  → une courte description
+       - card-tag   → le stack utilisé (ex: JS · React · Node)
+    ────────────────────────────────────────────────────────────────── */
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Mes projets</h1>
+    <p>Une sélection de mes projets personnels.</p>
+  </header>
+
+  <div class="projects">
+
+    <!-- PROJET 1 — modifie ou duplique ce bloc -->
+    <a class="card" href="https://mon-projet-1.pages.dev" target="_blank" rel="noopener">
+      <div class="card-left">
+        <span class="card-name">Nom du projet 1</span>
+        <span class="card-desc">Description courte de ce que fait le projet.</span>
+      </div>
+      <span class="card-tag">JS · Vite</span>
+      <span class="arrow">→</span>
+    </a>
+
+    <!-- PROJET 2 -->
+    <a class="card" href="https://mon-projet-2.pages.dev" target="_blank" rel="noopener">
+      <div class="card-left">
+        <span class="card-name">Nom du projet 2</span>
+        <span class="card-desc">Description courte de ce que fait le projet.</span>
+      </div>
+      <span class="card-tag">JS · Node</span>
+      <span class="arrow">→</span>
+    </a>
+
+    <!-- PROJET 3 -->
+    <a class="card" href="https://mon-projet-3.pages.dev" target="_blank" rel="noopener">
+      <div class="card-left">
+        <span class="card-name">Nom du projet 3</span>
+        <span class="card-desc">Description courte de ce que fait le projet.</span>
+      </div>
+      <span class="card-tag">JS · React</span>
+      <span class="arrow">→</span>
+    </a>
+
+  </div>
+
+  <footer>
+    <!-- Optionnel : ton nom ou GitHub -->
+    <!-- <a href="https://github.com/ton-pseudo">GitHub</a> -->
+  </footer>
+
+</body>
+</html>
