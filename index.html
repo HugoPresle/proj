@@ -1,178 +1,802 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mes Projets</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planning Repas — Semaine du 28 juin</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap');
 
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #F7F5F0;
+    --surface: #FFFFFF;
+    --surface2: #F0EDE6;
+    --text: #1C1A16;
+    --text-muted: #7A7568;
+    --accent: #3D8B6E;
+    --accent-light: #E8F3EE;
+    --warm: #E8935A;
+    --warm-light: #FDF0E8;
+    --tag-flemme: #FFF3CD;
+    --tag-flemme-text: #92630A;
+    --radius: 12px;
+    --shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
 
-    :root {
-      --bg: #f9f9f7;
-      --surface: #ffffff;
-      --border: #e8e8e4;
-      --text: #1a1a18;
-      --muted: #888884;
-      --accent: #2563eb;
-      --accent-light: #eff4ff;
-      --radius: 10px;
-    }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    body {
-      font-family: 'Inter', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      padding: 60px 20px;
-    }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 24px 16px 64px;
+  }
 
-    header {
-      max-width: 680px;
-      margin: 0 auto 56px;
-    }
+  /* HEADER */
+  header {
+    max-width: 720px;
+    margin: 0 auto 36px;
+    padding: 28px 32px;
+    background: var(--accent);
+    border-radius: var(--radius);
+    color: white;
+  }
+  header .eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    opacity: 0.75;
+    margin-bottom: 6px;
+  }
+  header h1 {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  header p {
+    font-size: 14px;
+    opacity: 0.8;
+  }
+  .budget-badge {
+    display: inline-block;
+    margin-top: 12px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 13px;
+    font-weight: 500;
+  }
 
-    header h1 {
-      font-size: 1.75rem;
-      font-weight: 600;
-      letter-spacing: -0.03em;
-      margin-bottom: 8px;
-    }
+  /* LAYOUT */
+  .container { max-width: 720px; margin: 0 auto; }
 
-    header p {
-      color: var(--muted);
-      font-size: 0.95rem;
-      line-height: 1.6;
-    }
+  section { margin-bottom: 40px; }
 
-    .projects {
-      max-width: 680px;
-      margin: 0 auto;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
+  .section-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #E2DDD5;
+  }
 
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 20px 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      text-decoration: none;
-      color: inherit;
-      transition: border-color 0.15s, box-shadow 0.15s;
-    }
+  /* PLANNING */
+  .planning-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
 
-    .card:hover {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px var(--accent-light);
-    }
+  .jour-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: var(--shadow);
+    transition: transform 0.15s;
+  }
+  .jour-card:hover { transform: translateY(-1px); }
 
-    .card-left {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
+  .jour-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    min-width: 36px;
+  }
 
-    .card-name {
-      font-weight: 500;
-      font-size: 0.975rem;
-    }
+  .plat-info { flex: 1; }
+  .plat-nom {
+    font-weight: 600;
+    font-size: 15px;
+    margin-bottom: 2px;
+  }
+  .plat-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
 
-    .card-desc {
-      font-size: 0.85rem;
-      color: var(--muted);
-    }
+  .plat-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
 
-    .card-tag {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.72rem;
-      background: var(--accent-light);
-      color: var(--accent);
-      padding: 3px 8px;
-      border-radius: 4px;
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
+  .badge {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+  .badge-temps {
+    background: var(--surface2);
+    color: var(--text-muted);
+  }
+  .badge-flemme {
+    background: var(--tag-flemme);
+    color: var(--tag-flemme-text);
+  }
+  .badge-frais {
+    background: var(--accent-light);
+    color: var(--accent);
+  }
 
-    .arrow {
-      color: var(--muted);
-      font-size: 1rem;
-      flex-shrink: 0;
-      transition: transform 0.15s, color 0.15s;
-    }
+  .emoji-icon { font-size: 20px; }
 
-    .card:hover .arrow {
-      transform: translateX(3px);
-      color: var(--accent);
-    }
+  /* COURSES */
+  .courses-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  @media (max-width: 520px) { .courses-grid { grid-template-columns: 1fr; } }
 
-    footer {
-      max-width: 680px;
-      margin: 48px auto 0;
-      font-size: 0.8rem;
-      color: var(--muted);
-    }
+  .rayon-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    box-shadow: var(--shadow);
+  }
+  .rayon-title {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .course-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    padding: 5px 0;
+    border-bottom: 1px solid #F0EDE6;
+    gap: 8px;
+  }
+  .course-item:last-child { border-bottom: none; }
+  .course-nom { color: var(--text); }
+  .course-prix {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
 
-    /* ── AJOUTE TES PROJETS ICI ─────────────────────────────────────────
-       Duplique un bloc <a class="card"> pour chaque nouveau projet.
-       - href       → l'URL de ton projet (ex: https://mon-projet.pages.dev)
-       - card-name  → le nom affiché
-       - card-desc  → une courte description
-       - card-tag   → le stack utilisé (ex: JS · React · Node)
-    ────────────────────────────────────────────────────────────────── */
-  </style>
+  .total-card {
+    background: var(--accent);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 12px;
+  }
+  .total-label { font-size: 14px; opacity: 0.85; }
+  .total-montant { font-family: 'DM Mono', monospace; font-size: 22px; font-weight: 500; }
+
+  .liste-courte {
+    background: var(--surface2);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.8;
+  }
+  .liste-courte strong {
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+
+  /* RECETTES */
+  .recettes-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .recette-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+
+  .recette-header {
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid #F0EDE6;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .recette-titre {
+    font-size: 17px;
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+  .recette-meta {
+    font-size: 12px;
+    color: var(--text-muted);
+    display: flex;
+    gap: 10px;
+  }
+  .recette-emoji { font-size: 28px; }
+
+  .recette-body {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 0;
+  }
+  @media (max-width: 520px) { .recette-body { grid-template-columns: 1fr; } }
+
+  .recette-ingredients {
+    padding: 16px 18px;
+    background: var(--surface2);
+    border-right: 1px solid #E8E4DC;
+  }
+  .recette-ingredients h4 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+  .recette-ingredients ul {
+    list-style: none;
+    font-size: 13px;
+    line-height: 2;
+  }
+  .recette-ingredients li::before {
+    content: "–";
+    color: var(--accent);
+    margin-right: 6px;
+  }
+
+  .recette-etapes {
+    padding: 16px 20px;
+  }
+  .recette-etapes h4 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+  .etape {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 10px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .etape-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--accent);
+    min-width: 20px;
+    margin-top: 1px;
+  }
+
+  .tip {
+    margin-top: 10px;
+    background: var(--warm-light);
+    border-left: 3px solid var(--warm);
+    border-radius: 0 6px 6px 0;
+    padding: 8px 12px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .tip::before { content: "💡 "; }
+
+  /* NAV TABS */
+  .tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 20px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+  .tab {
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1.5px solid #E2DDD5;
+    background: white;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    color: var(--text-muted);
+    transition: all 0.15s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .tab.active, .tab:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
+
+  .section-panel { display: none; }
+  .section-panel.active { display: block; }
+
+</style>
 </head>
 <body>
 
-  <header>
-    <h1>Mes projets</h1>
-    <p>Une sélection de mes projets personnels.</p>
-  </header>
+<header>
+  <div class="eyebrow">Planning Repas · 1 personne</div>
+  <h1>Semaine du 28 juin →  4 juillet</h1>
+  <p>Canicule 🌡️ — Repas frais, légers, rapides. Protéinés et rassasiants.</p>
+  <span class="budget-badge">Budget estimé : ~47 €</span>
+</header>
 
-  <div class="projects">
+<div class="container">
 
-    <!-- PROJET 1 — modifie ou duplique ce bloc -->
-    <a class="card" href="https://mon-projet-1.pages.dev" target="_blank" rel="noopener">
-      <div class="card-left">
-        <span class="card-name">Nom du projet 1</span>
-        <span class="card-desc">Description courte de ce que fait le projet.</span>
-      </div>
-      <span class="card-tag">JS · Vite</span>
-      <span class="arrow">→</span>
-    </a>
-
-    <!-- PROJET 2 -->
-    <a class="card" href="https://mon-projet-2.pages.dev" target="_blank" rel="noopener">
-      <div class="card-left">
-        <span class="card-name">Nom du projet 2</span>
-        <span class="card-desc">Description courte de ce que fait le projet.</span>
-      </div>
-      <span class="card-tag">JS · Node</span>
-      <span class="arrow">→</span>
-    </a>
-
-    <!-- PROJET 3 -->
-    <a class="card" href="https://mon-projet-3.pages.dev" target="_blank" rel="noopener">
-      <div class="card-left">
-        <span class="card-name">Nom du projet 3</span>
-        <span class="card-desc">Description courte de ce que fait le projet.</span>
-      </div>
-      <span class="card-tag">JS · React</span>
-      <span class="arrow">→</span>
-    </a>
-
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('planning')">📅 Planning</button>
+    <button class="tab" onclick="showTab('courses')">🛒 Courses</button>
+    <button class="tab" onclick="showTab('recettes')">👨‍🍳 Recettes</button>
   </div>
 
-  <footer>
-    <!-- Optionnel : ton nom ou GitHub -->
-    <!-- <a href="https://github.com/ton-pseudo">GitHub</a> -->
-  </footer>
+  <!-- PLANNING -->
+  <div id="planning" class="section-panel active">
+    <p class="section-title">7 dîners de la semaine</p>
+    <div class="planning-grid">
+
+      <div class="jour-card">
+        <span class="emoji-icon">🥗</span>
+        <div class="plat-info">
+          <div class="plat-nom">Salade poulet grillé, tomates, concombre</div>
+          <div class="plat-desc">Vinaigrette moutarde-citron, pain pita</div>
+        </div>
+        <div class="plat-meta">
+          <span class="badge badge-frais">Frais</span>
+          <span class="badge badge-temps">15 min</span>
+          <span class="jour-label">Sam</span>
+        </div>
+      </div>
+
+      <div class="jour-card">
+        <span class="emoji-icon">🍳</span>
+        <div class="plat-info">
+          <div class="plat-nom">Œufs brouillés, haricots verts croquants</div>
+          <div class="plat-desc">Tartines de pain complet, huile d'olive</div>
+        </div>
+        <div class="plat-meta">
+          <span class="badge badge-flemme">⚡ Flemme</span>
+          <span class="badge badge-temps">10 min</span>
+          <span class="jour-label">Dim</span>
+        </div>
+      </div>
+
+      <div class="jour-card">
+        <span class="emoji-icon">🍚</span>
+        <div class="plat-info">
+          <div class="plat-nom">Riz sauté au bœuf haché, courgettes</div>
+          <div class="plat-desc">Sauce soja, ail, huile d'olive</div>
+        </div>
+        <div class="plat-meta">
+          <span class="badge badge-temps">25 min</span>
+          <span class="jour-label">Lun</span>
+        </div>
+      </div>
+
+      <div class="jour-card">
+        <span class="emoji-icon">🫘</span>
+        <div class="plat-info">
+          <div class="plat-nom">Poulet poêlé, pois chiches à l'ail</div>
+          <div class="plat-desc">Citron, paprika fumé, persil</div>
+        </div>
+        <div class="plat-meta">
+          <span class="badge badge-temps">20 min</span>
+          <span class="jour-label">Mar</span>
+        </div>
+      </div>
+
+      <div class="jour-card">
+        <span class="emoji-icon">🥚</span>
+        <div class="plat-info">
+          <div class="plat-nom">Omelette jambon-fromage, salade verte</div>
+          <div class="plat-desc">Vinaigrette simple, cornichons</div>
+        </div>
+        <div class="plat-meta">
+          <span class="badge badge-flemme">⚡ Flemme</span>
+          <span class="badge badge-temps">10 min</span>
+          <span class="jour-label">Mer</span>
+        </div>
+      </div>
+
+      <div class="jour-card">
+        <span class="emoji-icon">🥩</span>
+        <div class="plat-info">
+          <div class="plat-nom">Steak haché, taboulé maison</div>
+          <div class="plat-desc">Semoule, tomates, concombre, menthe, citron</div>
+        </div>
+        <div class="plat-meta">
+          <span class="badge badge-frais">Frais</span>
+          <span class="badge badge-temps">20 min</span>
+          <span class="jour-label">Jeu</span>
+        </div>
+      </div>
+
+      <div class="jour-card">
+        <span class="emoji-icon">🍗</span>
+        <div class="plat-info">
+          <div class="plat-nom">Wraps poulet mariné, avocat, tomate</div>
+          <div class="plat-desc">Crème fraîche, coriandre, tortillas</div>
+        </div>
+        <div class="plat-meta">
+          <span class="badge badge-frais">Frais</span>
+          <span class="badge badge-temps">20 min</span>
+          <span class="jour-label">Ven</span>
+        </div>
+      </div>
+
+    </div>
+    <div style="margin-top: 12px; font-size: 12px; color: var(--text-muted); text-align: center;">
+      ⚡ Flemme = moins de 15 min, une seule poêle · 🌿 Frais = froid ou tiède, pas besoin de chauffer longtemps
+    </div>
+  </div>
+
+  <!-- COURSES -->
+  <div id="courses" class="section-panel">
+    <p class="section-title">Liste par rayon — marché + supermarché</p>
+    <div class="courses-grid">
+
+      <div class="rayon-card">
+        <div class="rayon-title">🥩 Viandes</div>
+        <div class="course-item"><span class="course-nom">Escalopes de poulet (600g)</span><span class="course-prix">~5,50 €</span></div>
+        <div class="course-item"><span class="course-nom">Bœuf haché 5% MG (400g)</span><span class="course-prix">~4,50 €</span></div>
+        <div class="course-item"><span class="course-nom">Steak haché (2 pièces)</span><span class="course-prix">~3,50 €</span></div>
+        <div class="course-item"><span class="course-nom">Jambon (4 tranches)</span><span class="course-prix">~2,20 €</span></div>
+      </div>
+
+      <div class="rayon-card">
+        <div class="rayon-title">🥦 Légumes (marché)</div>
+        <div class="course-item"><span class="course-nom">Tomates (1 kg)</span><span class="course-prix">~2,50 €</span></div>
+        <div class="course-item"><span class="course-nom">Concombre (1)</span><span class="course-prix">~0,90 €</span></div>
+        <div class="course-item"><span class="course-nom">Courgettes (2)</span><span class="course-prix">~1,50 €</span></div>
+        <div class="course-item"><span class="course-nom">Haricots verts (500g)</span><span class="course-prix">~2,00 €</span></div>
+        <div class="course-item"><span class="course-nom">Salade verte (1)</span><span class="course-prix">~1,00 €</span></div>
+        <div class="course-item"><span class="course-nom">Menthe fraîche (bouquet)</span><span class="course-prix">~0,80 €</span></div>
+        <div class="course-item"><span class="course-nom">Persil plat</span><span class="course-prix">~0,80 €</span></div>
+        <div class="course-item"><span class="course-nom">Citrons (3)</span><span class="course-prix">~1,00 €</span></div>
+        <div class="course-item"><span class="course-nom">Avocats (2)</span><span class="course-prix">~2,00 €</span></div>
+        <div class="course-item"><span class="course-nom">Ail (1 tête)</span><span class="course-prix">~0,70 €</span></div>
+      </div>
+
+      <div class="rayon-card">
+        <div class="rayon-title">🥚 Frais</div>
+        <div class="course-item"><span class="course-nom">Œufs (x6)</span><span class="course-prix">~2,20 €</span></div>
+        <div class="course-item"><span class="course-nom">Fromage râpé (200g)</span><span class="course-prix">~2,00 €</span></div>
+        <div class="course-item"><span class="course-nom">Crème fraîche épaisse (20cl)</span><span class="course-prix">~1,20 €</span></div>
+        <div class="course-item"><span class="course-nom">Pois chiches cuits (400g)</span><span class="course-prix">~1,20 €</span></div>
+      </div>
+
+      <div class="rayon-card">
+        <div class="rayon-title">🧴 Épicerie / Sec</div>
+        <div class="course-item"><span class="course-nom">Semoule fine (500g)</span><span class="course-prix">~1,20 €</span></div>
+        <div class="course-item"><span class="course-nom">Sauce soja (petite bouteille)</span><span class="course-prix">~1,80 €</span></div>
+        <div class="course-item"><span class="course-nom">Paprika fumé</span><span class="course-prix">~1,50 €</span></div>
+        <div class="course-item"><span class="course-nom">Moutarde (petit pot)</span><span class="course-prix">~1,20 €</span></div>
+        <div class="course-item"><span class="course-nom">Tortillas (x6)</span><span class="course-prix">~2,00 €</span></div>
+        <div class="course-item"><span class="course-nom">Pain pita (x4)</span><span class="course-prix">~1,50 €</span></div>
+        <div class="course-item"><span class="course-nom">Pain complet (tranches)</span><span class="course-prix">~1,80 €</span></div>
+      </div>
+
+    </div>
+
+    <div class="total-card">
+      <span class="total-label">Total estimé (hors placards)</span>
+      <span class="total-montant">~46,50 €</span>
+    </div>
+
+    <div class="liste-courte">
+      <strong>Version courte à copier</strong>
+      Poulet 600g · Bœuf haché 400g · 2 steaks hachés · Jambon 4 tranches · Œufs x6 · Pois chiches · Tomates 1kg · Concombre · 2 courgettes · Haricots verts 500g · Salade verte · 2 avocats · Ail · Citrons x3 · Menthe · Persil · Crème fraîche · Fromage râpé · Semoule · Sauce soja · Paprika fumé · Moutarde · Tortillas · Pain pita · Pain complet
+    </div>
+  </div>
+
+  <!-- RECETTES -->
+  <div id="recettes" class="section-panel">
+    <p class="section-title">Toutes les recettes de la semaine</p>
+    <div class="recettes-grid">
+
+      <!-- SALADE POULET -->
+      <div class="recette-card">
+        <div class="recette-header">
+          <div>
+            <div class="recette-titre">🥗 Salade poulet grillé, tomates, concombre</div>
+            <div class="recette-meta"><span>⏱ 15 min</span><span>1 poêle</span><span>Samedi</span></div>
+          </div>
+          <span class="recette-emoji">🌿</span>
+        </div>
+        <div class="recette-body">
+          <div class="recette-ingredients">
+            <h4>Ingrédients</h4>
+            <ul>
+              <li>1 escalope de poulet</li>
+              <li>2 tomates</li>
+              <li>½ concombre</li>
+              <li>2 pains pita</li>
+              <li>1 c.s. huile d'olive</li>
+              <li>½ c.s. moutarde</li>
+              <li>Jus de ½ citron</li>
+              <li>Sel, poivre</li>
+            </ul>
+          </div>
+          <div class="recette-etapes">
+            <h4>Étapes</h4>
+            <div class="etape"><span class="etape-num">1.</span><span>Coupe le poulet en lanières. Sale et poivre.</span></div>
+            <div class="etape"><span class="etape-num">2.</span><span>Fais chauffer la poêle avec l'huile d'olive à feu moyen-fort. Ajoute le poulet et laisse cuire 4 min de chaque côté sans toucher. Il doit être doré.</span></div>
+            <div class="etape"><span class="etape-num">3.</span><span>Pendant ce temps, coupe les tomates et le concombre en dés. Mets dans un bol.</span></div>
+            <div class="etape"><span class="etape-num">4.</span><span>Dans une tasse : mélange moutarde + jus de citron + une giclée d'huile d'olive + sel. C'est ta vinaigrette.</span></div>
+            <div class="etape"><span class="etape-num">5.</span><span>Ajoute le poulet cuit sur la salade, verse la vinaigrette, mange avec le pita.</span></div>
+            <div class="tip">Le poulet doit reposer 2 min hors du feu avant de couper — il sera plus juteux.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- OEUFS BROUILLÉS -->
+      <div class="recette-card">
+        <div class="recette-header">
+          <div>
+            <div class="recette-titre">🍳 Œufs brouillés, haricots verts croquants</div>
+            <div class="recette-meta"><span>⏱ 10 min</span><span>1 casserole + 1 poêle</span><span>Dimanche ⚡</span></div>
+          </div>
+          <span class="recette-emoji">⚡</span>
+        </div>
+        <div class="recette-body">
+          <div class="recette-ingredients">
+            <h4>Ingrédients</h4>
+            <ul>
+              <li>3 œufs</li>
+              <li>200g haricots verts</li>
+              <li>1 noix de beurre</li>
+              <li>2 tartines pain complet</li>
+              <li>Sel, poivre</li>
+              <li>Huile d'olive (filet final)</li>
+            </ul>
+          </div>
+          <div class="recette-etapes">
+            <h4>Étapes</h4>
+            <div class="etape"><span class="etape-num">1.</span><span>Fais bouillir de l'eau dans la casserole avec du sel. Plonge les haricots 5 min — ils doivent rester un peu croquants. Égoutte.</span></div>
+            <div class="etape"><span class="etape-num">2.</span><span>Casse les 3 œufs dans un bol, bats à la fourchette, sale et poivre.</span></div>
+            <div class="etape"><span class="etape-num">3.</span><span>Fais fondre le beurre dans la poêle à feu doux (feu bas, c'est important). Verse les œufs.</span></div>
+            <div class="etape"><span class="etape-num">4.</span><span>Remue doucement avec une spatule en faisant des grandes vagues. Retire du feu quand c'est encore légèrement baveux — ça finit de cuire tout seul.</span></div>
+            <div class="etape"><span class="etape-num">5.</span><span>Sers sur les tartines avec les haricots à côté, filet d'huile d'olive sur tout.</span></div>
+            <div class="tip">Le secret des œufs brouillés : feu doux + on s'arrête avant que ce soit totalement cuit.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIZ SAUTÉ BŒUF -->
+      <div class="recette-card">
+        <div class="recette-header">
+          <div>
+            <div class="recette-titre">🍚 Riz sauté au bœuf haché, courgettes</div>
+            <div class="recette-meta"><span>⏱ 25 min</span><span>1 casserole + 1 poêle</span><span>Lundi</span></div>
+          </div>
+          <span class="recette-emoji">🔥</span>
+        </div>
+        <div class="recette-body">
+          <div class="recette-ingredients">
+            <h4>Ingrédients</h4>
+            <ul>
+              <li>1 sachet de riz (déjà en stock)</li>
+              <li>200g bœuf haché</li>
+              <li>1 courgette</li>
+              <li>2 gousses d'ail</li>
+              <li>2 c.s. sauce soja</li>
+              <li>1 c.s. huile d'olive</li>
+              <li>Sel, poivre</li>
+            </ul>
+          </div>
+          <div class="recette-etapes">
+            <h4>Étapes</h4>
+            <div class="etape"><span class="etape-num">1.</span><span>Fais cuire le riz dans la casserole selon les indications du sachet. Égoutte et réserve.</span></div>
+            <div class="etape"><span class="etape-num">2.</span><span>Coupe la courgette en petits dés. Écrase ou émince finement les 2 gousses d'ail.</span></div>
+            <div class="etape"><span class="etape-num">3.</span><span>Chauffe la poêle avec l'huile à feu fort. Ajoute le bœuf haché, écrase à la spatule, laisse dorer 3-4 min sans trop remuer.</span></div>
+            <div class="etape"><span class="etape-num">4.</span><span>Ajoute l'ail et les dés de courgette, remue 3 min.</span></div>
+            <div class="etape"><span class="etape-num">5.</span><span>Ajoute le riz dans la poêle, verse la sauce soja, mélange bien 1-2 min à feu fort. Goûte et ajuste sel/poivre.</span></div>
+            <div class="tip">Feu fort pour le riz sauté = riz qui ne colle pas et légèrement grillé, c'est meilleur.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- POULET POIS CHICHES -->
+      <div class="recette-card">
+        <div class="recette-header">
+          <div>
+            <div class="recette-titre">🫘 Poulet poêlé, pois chiches à l'ail</div>
+            <div class="recette-meta"><span>⏱ 20 min</span><span>1 poêle</span><span>Mardi</span></div>
+          </div>
+          <span class="recette-emoji">🍋</span>
+        </div>
+        <div class="recette-body">
+          <div class="recette-ingredients">
+            <h4>Ingrédients</h4>
+            <ul>
+              <li>1 escalope de poulet</li>
+              <li>400g pois chiches (boîte)</li>
+              <li>2 gousses d'ail</li>
+              <li>½ citron</li>
+              <li>1 c.c. paprika fumé</li>
+              <li>Persil</li>
+              <li>Sel, poivre, huile d'olive</li>
+            </ul>
+          </div>
+          <div class="recette-etapes">
+            <h4>Étapes</h4>
+            <div class="etape"><span class="etape-num">1.</span><span>Égoutte et rince les pois chiches. Émince l'ail.</span></div>
+            <div class="etape"><span class="etape-num">2.</span><span>Coupe le poulet en gros morceaux. Sale, poivre, saupoudre de paprika.</span></div>
+            <div class="etape"><span class="etape-num">3.</span><span>Huile dans la poêle à feu moyen-fort. Saisit le poulet 4 min de chaque côté. Retire et réserve sur une assiette.</span></div>
+            <div class="etape"><span class="etape-num">4.</span><span>Dans la même poêle (sans nettoyer), baisse le feu. Ajoute l'ail, laisse 30 secondes, puis les pois chiches. Mélange 3 min.</span></div>
+            <div class="etape"><span class="etape-num">5.</span><span>Remet le poulet dans la poêle, presse le citron dessus, ajoute le persil. Mélange et sers.</span></div>
+            <div class="tip">Utilise la même poêle sans laver — les sucs de cuisson du poulet parfument les pois chiches.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- OMELETTE -->
+      <div class="recette-card">
+        <div class="recette-header">
+          <div>
+            <div class="recette-titre">🥚 Omelette jambon-fromage, salade verte</div>
+            <div class="recette-meta"><span>⏱ 10 min</span><span>1 poêle</span><span>Mercredi ⚡</span></div>
+          </div>
+          <span class="recette-emoji">⚡</span>
+        </div>
+        <div class="recette-body">
+          <div class="recette-ingredients">
+            <h4>Ingrédients</h4>
+            <ul>
+              <li>3 œufs</li>
+              <li>2 tranches jambon</li>
+              <li>30g fromage râpé</li>
+              <li>Salade verte</li>
+              <li>1 c.s. huile d'olive</li>
+              <li>Moutarde + vinaigre (vinaigrette)</li>
+              <li>Sel, poivre</li>
+            </ul>
+          </div>
+          <div class="recette-etapes">
+            <h4>Étapes</h4>
+            <div class="etape"><span class="etape-num">1.</span><span>Casse les œufs dans un bol, bats à la fourchette, sale et poivre légèrement.</span></div>
+            <div class="etape"><span class="etape-num">2.</span><span>Coupe le jambon en petits morceaux.</span></div>
+            <div class="etape"><span class="etape-num">3.</span><span>Chauffe la poêle avec l'huile à feu moyen. Verse les œufs. Laisse coaguler 1 min sans toucher.</span></div>
+            <div class="etape"><span class="etape-num">4.</span><span>Quand les bords sont cuits mais le centre encore mou : dispose le jambon et le fromage sur une moitié.</span></div>
+            <div class="etape"><span class="etape-num">5.</span><span>Replie l'autre moitié par-dessus. Laisse 30 secondes, puis glisse sur l'assiette. Mange avec la salade assaisonnée.</span></div>
+            <div class="tip">Vinaigrette express : 1 c.c. moutarde + 1 c.s. vinaigre + 2 c.s. huile + sel. Fouette dans le bol.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TABOULÉ STEAK -->
+      <div class="recette-card">
+        <div class="recette-header">
+          <div>
+            <div class="recette-titre">🥩 Steak haché, taboulé maison</div>
+            <div class="recette-meta"><span>⏱ 20 min</span><span>1 casserole + 1 poêle</span><span>Jeudi</span></div>
+          </div>
+          <span class="recette-emoji">🌿</span>
+        </div>
+        <div class="recette-body">
+          <div class="recette-ingredients">
+            <h4>Ingrédients</h4>
+            <ul>
+              <li>2 steaks hachés</li>
+              <li>100g semoule fine</li>
+              <li>2 tomates</li>
+              <li>½ concombre</li>
+              <li>Persil + menthe fraîche</li>
+              <li>Jus d'1 citron</li>
+              <li>2 c.s. huile d'olive</li>
+              <li>Sel, poivre</li>
+            </ul>
+          </div>
+          <div class="recette-etapes">
+            <h4>Étapes</h4>
+            <div class="etape"><span class="etape-num">1.</span><span>Verse la semoule dans un bol. Ajoute 100ml d'eau bouillante + une pincée de sel + 1 c.s. huile d'olive. Couvre avec une assiette et laisse gonfler 5 min.</span></div>
+            <div class="etape"><span class="etape-num">2.</span><span>Pendant ce temps, coupe tomates et concombre en tout petits dés. Cisèle le persil et la menthe (beaucoup, c'est ça qui fait le goût).</span></div>
+            <div class="etape"><span class="etape-num">3.</span><span>Égrène la semoule à la fourchette. Ajoute les légumes, herbes, jus de citron et huile. Mélange. Mets au frigo.</span></div>
+            <div class="etape"><span class="etape-num">4.</span><span>Chauffe la poêle à sec (sans huile) à feu fort. Cuis les steaks 2-3 min de chaque côté selon ton goût.</span></div>
+            <div class="etape"><span class="etape-num">5.</span><span>Sers le steak avec le taboulé frais sorti du frigo.</span></div>
+            <div class="tip">Le taboulé peut se préparer le midi pour qu'il soit bien frais le soir — encore meilleur.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- WRAPS POULET -->
+      <div class="recette-card">
+        <div class="recette-header">
+          <div>
+            <div class="recette-titre">🍗 Wraps poulet mariné, avocat, tomate</div>
+            <div class="recette-meta"><span>⏱ 20 min</span><span>1 poêle</span><span>Vendredi</span></div>
+          </div>
+          <span class="recette-emoji">🥑</span>
+        </div>
+        <div class="recette-body">
+          <div class="recette-ingredients">
+            <h4>Ingrédients</h4>
+            <ul>
+              <li>1 escalope de poulet</li>
+              <li>2 tortillas</li>
+              <li>1 avocat</li>
+              <li>1 tomate</li>
+              <li>2 c.s. crème fraîche</li>
+              <li>Jus ½ citron</li>
+              <li>Paprika, sel, poivre</li>
+              <li>Huile d'olive</li>
+            </ul>
+          </div>
+          <div class="recette-etapes">
+            <h4>Étapes</h4>
+            <div class="etape"><span class="etape-num">1.</span><span>Coupe le poulet en fines lanières. Dans un bol : marine-les 5 min avec huile d'olive + paprika + jus de citron + sel.</span></div>
+            <div class="etape"><span class="etape-num">2.</span><span>Cuis les lanières dans la poêle chaude 5-6 min en remuant, jusqu'à ce qu'elles soient bien dorées.</span></div>
+            <div class="etape"><span class="etape-num">3.</span><span>Coupe la tomate en dés. Ouvre l'avocat, enlève le noyau, coupe en tranches (ou écrase à la fourchette avec du citron + sel).</span></div>
+            <div class="etape"><span class="etape-num">4.</span><span>Chauffe les tortillas 30 sec dans la poêle à sec (ou à la flamme directe 2 secondes par côté).</span></div>
+            <div class="etape"><span class="etape-num">5.</span><span>Garnis chaque tortilla : crème fraîche → poulet → tomate → avocat. Roule en serrant bien. Mange sans attendre.</span></div>
+            <div class="tip">Pour que le wrap tienne : commence par la crème en couche fine, elle "colle" le reste.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function showTab(id) {
+    document.querySelectorAll('.section-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    event.target.classList.add('active');
+  }
+</script>
 
 </body>
 </html>
