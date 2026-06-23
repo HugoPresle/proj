@@ -1,692 +1,78 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Planning Repas — Semaine du 21 juin</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
-
-  :root {
-    --c-bg: #F2F7F5;
-    --c-surface: #FFFFFF;
-    --c-accent: #2D8C6A;
-    --c-accent-light: #E0F2EB;
-    --c-accent-mid: #4BAE89;
-    --c-text: #1A2A24;
-    --c-text-muted: #6B8A7E;
-    --c-border: #D4E8DF;
-    --c-badge-bg: #FFF3CD;
-    --c-badge-text: #8C6D00;
-    --radius: 14px;
-    --radius-sm: 8px;
-    --shadow: 0 2px 12px rgba(45,140,106,0.08);
-    --shadow-hover: 0 6px 24px rgba(45,140,106,0.15);
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--c-bg);
-    color: var(--c-text);
-    min-height: 100vh;
-    padding: 0 0 60px 0;
-  }
-
-  /* HEADER */
-  .header {
-    background: var(--c-accent);
-    color: white;
-    padding: 28px 24px 22px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
-  .header-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 4px;
-  }
-  .header h1 {
-    font-size: 20px;
-    font-weight: 700;
-    letter-spacing: -0.3px;
-  }
-  .header-sub {
-    font-size: 13px;
-    opacity: 0.8;
-    font-family: 'DM Mono', monospace;
-  }
-  .budget-pill {
-    background: rgba(255,255,255,0.2);
-    border-radius: 20px;
-    padding: 5px 12px;
-    font-size: 13px;
-    font-weight: 600;
-    white-space: nowrap;
-  }
-
-  /* NAV TABS */
-  .nav {
-    display: flex;
-    background: var(--c-surface);
-    border-bottom: 2px solid var(--c-border);
-    position: sticky;
-    top: 74px;
-    z-index: 99;
-  }
-  .nav button {
-    flex: 1;
-    padding: 14px 8px;
-    border: none;
-    background: transparent;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--c-text-muted);
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-    margin-bottom: -2px;
-    transition: all 0.2s;
-  }
-  .nav button.active {
-    color: var(--c-accent);
-    border-bottom-color: var(--c-accent);
-  }
-
-  /* SECTIONS */
-  .section { display: none; padding: 20px 16px; }
-  .section.active { display: block; }
-
-  /* PLANNING GRID */
-  .planning-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .day-card {
-    background: var(--c-surface);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    overflow: hidden;
-    transition: box-shadow 0.2s;
-    border: 2px solid transparent;
-  }
-  .day-card.open {
-    border-color: var(--c-accent);
-    box-shadow: var(--shadow-hover);
-  }
-
-  .day-header {
-    display: flex;
-    align-items: center;
-    padding: 16px 18px;
-    cursor: pointer;
-    gap: 14px;
-    user-select: none;
-  }
-
-  .day-label {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    font-weight: 500;
-    color: white;
-    background: var(--c-accent);
-    border-radius: 6px;
-    padding: 4px 8px;
-    min-width: 50px;
-    text-align: center;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .day-info { flex: 1; }
-  .day-dish {
-    font-size: 15px;
-    font-weight: 600;
-    line-height: 1.3;
-  }
-  .day-meta {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 3px;
-  }
-  .day-time {
-    font-size: 12px;
-    color: var(--c-text-muted);
-    font-family: 'DM Mono', monospace;
-  }
-  .badge-flemme {
-    background: var(--c-badge-bg);
-    color: var(--c-badge-text);
-    font-size: 11px;
-    font-weight: 600;
-    padding: 2px 7px;
-    border-radius: 20px;
-  }
-
-  .day-arrow {
-    font-size: 18px;
-    color: var(--c-text-muted);
-    transition: transform 0.25s;
-    flex-shrink: 0;
-  }
-  .day-card.open .day-arrow { transform: rotate(180deg); }
-
-  /* RECETTE */
-  .day-recipe {
-    display: none;
-    padding: 0 18px 20px;
-    border-top: 1px solid var(--c-border);
-    margin-top: 0;
-  }
-  .day-card.open .day-recipe { display: block; }
-
-  .recipe-section-title {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--c-accent);
-    margin: 16px 0 8px;
-  }
-
-  .ingredients-list {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-  }
-  .ingredient-row {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-    font-size: 14px;
-  }
-  .ingredient-qty {
-    font-family: 'DM Mono', monospace;
-    font-size: 12px;
-    color: var(--c-accent);
-    font-weight: 500;
-    min-width: 60px;
-    flex-shrink: 0;
-  }
-  .ingredient-name { color: var(--c-text); }
-
-  .steps-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  .step {
-    display: flex;
-    gap: 12px;
-    font-size: 14px;
-    line-height: 1.5;
-  }
-  .step-num {
-    background: var(--c-accent-light);
-    color: var(--c-accent);
-    font-family: 'DM Mono', monospace;
-    font-size: 12px;
-    font-weight: 700;
-    border-radius: 50%;
-    min-width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    margin-top: 1px;
-  }
-
-  .tip-box {
-    background: var(--c-accent-light);
-    border-left: 3px solid var(--c-accent);
-    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-    padding: 10px 12px;
-    font-size: 13px;
-    color: var(--c-accent);
-    margin-top: 14px;
-  }
-
-  /* COURSES */
-  .courses-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 16px;
-  }
-  .courses-title { font-size: 17px; font-weight: 700; }
-  .btn-copy {
-    background: var(--c-accent);
-    color: white;
-    border: none;
-    border-radius: var(--radius-sm);
-    padding: 8px 14px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-  .btn-copy:active { background: var(--c-accent-mid); }
-
-  .rayon-block { margin-bottom: 20px; }
-  .rayon-title {
-    font-size: 12px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--c-text-muted);
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .rayon-title::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--c-border);
-  }
-
-  .course-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 14px;
-    background: var(--c-surface);
-    border-radius: var(--radius-sm);
-    margin-bottom: 6px;
-    box-shadow: var(--shadow);
-  }
-  .course-name { font-size: 14px; }
-  .course-price {
-    font-family: 'DM Mono', monospace;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--c-accent);
-  }
-
-  .total-bar {
-    background: var(--c-accent);
-    color: white;
-    border-radius: var(--radius);
-    padding: 16px 18px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 8px;
-  }
-  .total-label { font-size: 14px; font-weight: 600; }
-  .total-amount { font-family: 'DM Mono', monospace; font-size: 20px; font-weight: 700; }
-  .total-budget { font-size: 12px; opacity: 0.75; margin-top: 2px; }
-
-  .copy-toast {
-    position: fixed;
-    bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%) translateY(20px);
-    background: var(--c-text);
-    color: white;
-    padding: 10px 20px;
-    border-radius: 30px;
-    font-size: 14px;
-    font-weight: 500;
-    opacity: 0;
-    transition: all 0.3s;
-    pointer-events: none;
-    z-index: 999;
-  }
-  .copy-toast.show {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-
-  /* RESPONSIVE */
-  @media(min-width: 600px) {
-    body { padding-bottom: 40px; }
-    .section { padding: 24px 20px; }
-    .planning-grid { max-width: 680px; margin: 0 auto; }
-    .rayon-block { max-width: 580px; margin-left: auto; margin-right: auto; margin-bottom: 20px; }
-    .total-bar { max-width: 580px; margin: 8px auto 0; }
-    .courses-header { max-width: 580px; margin: 0 auto 16px; }
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Franck le Cuisto 🍳</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
 </head>
 <body>
 
-<div class="header">
-  <div class="header-top">
-    <h1>🌿 Planning Repas</h1>
-    <span class="budget-pill">Budget &lt;40 €</span>
+  <div id="setup-screen" class="screen hidden">
+    <div class="setup-card">
+      <div class="setup-logo">🍳</div>
+      <h1>Franck le Cuisto</h1>
+      <p>Ton assistant repas perso. On planifie la semaine ensemble.</p>
+      <button id="start-btn" class="btn-primary">Planifier ma semaine →</button>
+    </div>
   </div>
-  <div class="header-sub">Semaine canicule · Sam 21 → Ven 27 juin</div>
-</div>
 
-<nav class="nav">
-  <button class="active" onclick="showTab('planning', this)">📅 Planning</button>
-  <button onclick="showTab('courses', this)">🛒 Courses</button>
-</nav>
-
-<div id="planning" class="section active">
-  <div class="planning-grid" id="planningGrid"></div>
-</div>
-
-<div id="courses" class="section">
-  <div class="courses-header">
-    <span class="courses-title">Liste de courses</span>
-    <button class="btn-copy" onclick="copyCourses()">📋 Copier</button>
+  <div id="chat-screen" class="screen hidden">
+    <div class="chat-header">
+      <span class="chat-logo">🍳</span>
+      <span class="chat-title">Franck le Cuisto</span>
+    </div>
+    <div id="chat-messages" class="chat-messages"></div>
+    <div class="chat-input-wrap">
+      <input type="text" id="chat-input" placeholder="Ta réponse..." autocomplete="off" />
+      <button id="chat-send" class="btn-send">↑</button>
+    </div>
   </div>
-  <div id="coursesContent"></div>
-</div>
 
-<div class="copy-toast" id="toast">✅ Copié !</div>
-
-<script>
-const jours = ['Samedi', 'Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi'];
-const joursShort = ['SAM', 'DIM', 'LUN', 'MAR', 'MER', 'JEU', 'VEN'];
-
-const repas = [
-  {
-    nom: "Wrap poulet avocat citron",
-    temps: "10 min",
-    flemme: true,
-    ingredients: [
-      { qty: "1 blanc", name: "de poulet (150g environ)" },
-      { qty: "1", name: "avocat mûr" },
-      { qty: "2", name: "grandes tortillas" },
-      { qty: "1 c. à s.", name: "huile d'olive" },
-      { qty: "½", name: "citron (jus)" },
-      { qty: "Sel, poivre", name: "" },
-      { qty: "Quelques", name: "feuilles de salade verte" },
-    ],
-    steps: [
-      "Coupe le blanc de poulet en lanières fines (2 cm d'épaisseur).",
-      "Fais chauffer un filet d'huile d'olive dans une poêle à feu moyen. Ajoute le poulet, sale et poivre. Fais cuire 3-4 min de chaque côté jusqu'à ce qu'il soit bien doré. Réserve hors du feu.",
-      "Pendant ce temps, écrase l'avocat à la fourchette dans un bol. Ajoute le jus de citron, une pincée de sel. Mélange.",
-      "Pose une tortilla à plat. Étale l'avocat, pose quelques feuilles de salade, puis le poulet. Roule bien serré.",
-      "Mange tiède ou à température ambiante.",
-    ],
-    tip: "Le poulet peut se faire la veille et se garder au frigo. Le lendemain tu montes juste le wrap."
-  },
-  {
-    nom: "Riz sauté aux légumes d'été & œuf",
-    temps: "20 min",
-    flemme: false,
-    ingredients: [
-      { qty: "1 sachet", name: "de riz (ou 80g en vrac)" },
-      { qty: "1", name: "courgette" },
-      { qty: "1", name: "poivron rouge" },
-      { qty: "2", name: "œufs" },
-      { qty: "2 c. à s.", name: "huile d'olive" },
-      { qty: "1 gousse", name: "d'ail" },
-      { qty: "Sel, poivre", name: "" },
-    ],
-    steps: [
-      "Fais cuire le riz dans une casserole d'eau salée selon les instructions du sachet (généralement 10-12 min). Égoutte et réserve.",
-      "Pendant que le riz cuit : coupe la courgette en demi-rondelles et le poivron en lamelles.",
-      "Dans une grande poêle, fais chauffer l'huile à feu vif. Ajoute l'ail écrasé, puis les légumes. Fais revenir 5-6 min en remuant — ils doivent être légèrement dorés mais encore croquants.",
-      "Pousse les légumes sur le côté de la poêle. Casse les œufs dans l'espace libre, brouille-les rapidement à la spatule, puis mélange avec le tout.",
-      "Ajoute le riz, mélange bien. Sale, poivre. C'est prêt."
-    ],
-    tip: "Version fraîche : mange à température ambiante. Arrose d'un filet de citron si tu en as un."
-  },
-  {
-    nom: "Salade de pois chiches, tomates, concombre",
-    temps: "10 min",
-    flemme: true,
-    ingredients: [
-      { qty: "1 boîte", name: "de pois chiches (400g)" },
-      { qty: "2", name: "tomates" },
-      { qty: "½", name: "concombre" },
-      { qty: "½", name: "oignon rouge" },
-      { qty: "2 c. à s.", name: "huile d'olive" },
-      { qty: "1 c. à s.", name: "vinaigre ou jus de citron" },
-      { qty: "Sel, poivre", name: "" },
-      { qty: "Quelques feuilles", name: "de menthe fraîche (optionnel)" },
-    ],
-    steps: [
-      "Rince et égoutte les pois chiches sous l'eau froide.",
-      "Coupe les tomates en dés, le concombre en demi-rondelles, l'oignon en lamelles fines.",
-      "Mets tout dans un saladier. Arrose d'huile d'olive et de vinaigre (ou citron). Sale, poivre.",
-      "Mélange bien. Tu peux ajouter quelques feuilles de menthe déchirées si tu en as.",
-      "C'est meilleur si tu laisses reposer 10 min au frigo avant de manger."
-    ],
-    tip: "Repas 100% froid, parfait pour la canicule. Très riche en protéines végétales."
-  },
-  {
-    nom: "Steak haché & purée de courgette",
-    temps: "20 min",
-    flemme: false,
-    ingredients: [
-      { qty: "2", name: "steaks hachés (5% MG)" },
-      { qty: "2", name: "courgettes moyennes" },
-      { qty: "1 c. à s.", name: "beurre" },
-      { qty: "1 c. à s.", name: "huile d'olive" },
-      { qty: "Sel, poivre, fleur de sel", name: "" },
-    ],
-    steps: [
-      "Coupe les courgettes en gros morceaux. Mets-les dans une casserole avec un fond d'eau salée. Fais cuire à couvert 10-12 min à feu moyen jusqu'à ce qu'elles soient tendres (teste avec une fourchette).",
-      "Égoutte bien les courgettes. Écrase-les à la fourchette dans la casserole. Ajoute le beurre, sale, poivre. Mélange — ça donne une purée grossière, c'est normal et c'est bon.",
-      "Pendant la fin de cuisson des courgettes : fais chauffer l'huile dans une poêle à feu vif. Pose les steaks. 2-3 min d'un côté, 2-3 min de l'autre pour une cuisson à point.",
-      "Pose les steaks sur la purée. Un peu de fleur de sel par-dessus, c'est prêt."
-    ],
-    tip: "La purée de courgette se mange tiède. Légère, digeste, parfaite par grosse chaleur."
-  },
-  {
-    nom: "Poulet mariné citron-ail & taboulé maison",
-    temps: "35 min",
-    flemme: false,
-    ingredients: [
-      { qty: "2 hauts", name: "de cuisse de poulet (désossés si possible)" },
-      { qty: "1 citron", name: "(jus + zeste)" },
-      { qty: "2 gousses", name: "d'ail" },
-      { qty: "3 c. à s.", name: "huile d'olive" },
-      { qty: "½ sachet", name: "de semoule (ou 80g)" },
-      { qty: "1", name: "tomate" },
-      { qty: "½", name: "concombre" },
-      { qty: "Sel, poivre", name: "" },
-      { qty: "Menthe ou persil", name: "si tu en as" },
-    ],
-    steps: [
-      "Marine le poulet : dans un bol, mélange le jus de citron, l'ail écrasé, 2 c. à s. d'huile, sel et poivre. Mets le poulet dedans, laisse reposer 15 min minimum.",
-      "Prépare la semoule : fais bouillir 200ml d'eau salée. Verse sur la semoule dans un bol, couvre avec une assiette, attends 5 min. Émiette à la fourchette avec 1 c. à s. d'huile.",
-      "Coupe tomates et concombre en petits dés. Mélange avec la semoule. Réserve au frais.",
-      "Cuis le poulet dans la poêle à feu moyen-vif (sans ajouter de matière grasse, la marinade suffit). 6-8 min de chaque côté selon l'épaisseur.",
-      "Sers le poulet avec le taboulé froid à côté."
-    ],
-    tip: "Le taboulé peut se faire en avance et se garde 2 jours au frigo."
-  },
-  {
-    nom: "Omelette jambon-fromage & salade verte",
-    temps: "10 min",
-    flemme: true,
-    ingredients: [
-      { qty: "3", name: "œufs" },
-      { qty: "2 tranches", name: "de jambon blanc" },
-      { qty: "40g", name: "d'emmental râpé" },
-      { qty: "1 c. à s.", name: "beurre" },
-      { qty: "Sel, poivre", name: "" },
-      { qty: "1 poignée", name: "de salade verte + vinaigrette" },
-    ],
-    steps: [
-      "Casse les œufs dans un bol. Sale légèrement, poivre. Bats bien à la fourchette.",
-      "Fais fondre le beurre dans la poêle à feu moyen. Quand ça mousse, verse les œufs.",
-      "Laisse prendre 30 secondes sans toucher. Ensuite ramène les bords vers le centre à la spatule pour que les œufs encore liquides coulent en dessous.",
-      "Quand le dessus est encore légèrement brillant (pas totalement cuit), pose le jambon et le fromage sur une moitié. Replie l'autre moitié par-dessus.",
-      "Glisse dans l'assiette. Mange avec la salade assaisonnée."
-    ],
-    tip: "Une omelette réussie c'est encore un peu baveuse à l'intérieur — si elle est sèche, elle est trop cuite."
-  },
-  {
-    nom: "Blanc de poulet & haricots verts à l'ail",
-    temps: "25 min",
-    flemme: false,
-    ingredients: [
-      { qty: "1 gros", name: "blanc de poulet (200g)" },
-      { qty: "200g", name: "de haricots verts (frais ou surgelés)" },
-      { qty: "2 gousses", name: "d'ail" },
-      { qty: "2 c. à s.", name: "huile d'olive" },
-      { qty: "½", name: "citron" },
-      { qty: "Sel, poivre, fleur de sel", name: "" },
-    ],
-    steps: [
-      "Fais cuire les haricots verts dans une casserole d'eau bouillante salée, 6-8 min (s'ils viennent du frigo : 4-5 min). Égoutte. Réserve.",
-      "Coupe le blanc de poulet en 2 ou 3 morceaux dans l'épaisseur pour qu'il cuise plus vite.",
-      "Dans la poêle, chauffe l'huile à feu vif. Fais cuire le poulet 3-4 min de chaque côté. Sale en fin de cuisson.",
-      "Dans la même poêle (hors du feu ou à feu très doux), ajoute l'ail haché. Laisse 30 secondes. Remets les haricots, mélange pour bien les enrober.",
-      "Sers tiède. Presse le citron sur le tout, quelques grains de fleur de sel."
-    ],
-    tip: "Ce plat est super simple mais ultra propre niveau nutrition. Idéal pour un soir avant une séance de muscu."
-  }
-];
-
-const courses = {
-  "🥩 Viandes & protéines": [
-    { name: "Blancs de poulet (x3)", prix: 5.20 },
-    { name: "Hauts de cuisse de poulet (x2)", prix: 2.80 },
-    { name: "Steaks hachés 5% MG (x2)", prix: 3.50 },
-    { name: "Jambon blanc (4 tranches)", prix: 1.90 },
-    { name: "Œufs (x6)", prix: 2.20 },
-  ],
-  "🥦 Fruits & légumes": [
-    { name: "Courgettes (x3)", prix: 1.50 },
-    { name: "Poivron rouge (x1)", prix: 0.90 },
-    { name: "Tomates (x4)", prix: 1.60 },
-    { name: "Concombre (x1)", prix: 0.90 },
-    { name: "Haricots verts (200g)", prix: 1.30 },
-    { name: "Salade verte (1 sachet)", prix: 1.20 },
-    { name: "Avocats (x2)", prix: 1.80 },
-    { name: "Citrons (x3)", prix: 1.00 },
-    { name: "Oignon rouge (x1)", prix: 0.40 },
-  ],
-  "🥫 Épicerie sèche": [
-    { name: "Pois chiches en boîte (x1)", prix: 0.95 },
-    { name: "Semoule fine (paquet)", prix: 1.20 },
-    { name: "Tortillas wrap (paquet de 4)", prix: 1.80 },
-  ],
-  "🧀 Frais / crémerie": [
-    { name: "Emmental râpé (sachet 150g)", prix: 1.50 },
-  ],
-  "🌿 Herbes (marché weekend)": [
-    { name: "Menthe fraîche (botte)", prix: 0.80 },
-  ],
-};
-
-// Générer planning
-const grid = document.getElementById('planningGrid');
-repas.forEach((r, i) => {
-  const card = document.createElement('div');
-  card.className = 'day-card';
-  card.innerHTML = `
-    <div class="day-header" onclick="toggleDay(${i})">
-      <span class="day-label">${joursShort[i]}</span>
-      <div class="day-info">
-        <div class="day-dish">${r.nom}</div>
-        <div class="day-meta">
-          <span class="day-time">⏱ ${r.temps}</span>
-          ${r.flemme ? '<span class="badge-flemme">⚡ Flemme</span>' : ''}
+  <div id="planning-screen" class="screen hidden">
+    <header class="app-header">
+      <div class="header-left">
+        <span class="header-logo">🍳</span>
+        <div>
+          <h1 class="header-title">Franck le Cuisto</h1>
+          <span id="week-label" class="header-week"></span>
         </div>
       </div>
-      <span class="day-arrow">▾</span>
-    </div>
-    <div class="day-recipe">
-      <div class="recipe-section-title">Ingrédients</div>
-      <div class="ingredients-list">
-        ${r.ingredients.map(ing => `
-          <div class="ingredient-row">
-            <span class="ingredient-qty">${ing.qty}</span>
-            <span class="ingredient-name">${ing.name}</span>
-          </div>
-        `).join('')}
+      <button id="new-week-btn" class="btn-outline">Nouvelle semaine</button>
+    </header>
+
+    <nav class="tabs">
+      <button class="tab active" data-tab="planning">Planning</button>
+      <button class="tab" data-tab="courses">Courses</button>
+    </nav>
+
+    <main class="app-main">
+      <section id="tab-planning" class="tab-content active">
+        <div id="days-grid" class="days-grid"></div>
+      </section>
+      <section id="tab-courses" class="tab-content">
+        <div id="courses-content" class="courses-content"></div>
+        <button id="copy-courses-btn" class="btn-copy">📋 Copier la liste</button>
+      </section>
+    </main>
+
+    <div id="recipe-modal" class="modal-overlay hidden">
+      <div class="modal-card">
+        <button id="modal-close" class="modal-close">✕</button>
+        <div id="modal-content"></div>
       </div>
-      <div class="recipe-section-title">Étapes</div>
-      <div class="steps-list">
-        ${r.steps.map((s, j) => `
-          <div class="step">
-            <span class="step-num">${j+1}</span>
-            <span>${s}</span>
-          </div>
-        `).join('')}
-      </div>
-      ${r.tip ? `<div class="tip-box">💡 ${r.tip}</div>` : ''}
     </div>
-  `;
-  grid.appendChild(card);
-});
-
-function toggleDay(index) {
-  const cards = document.querySelectorAll('.day-card');
-  cards.forEach((c, i) => {
-    if (i === index) {
-      c.classList.toggle('open');
-    } else {
-      c.classList.remove('open');
-    }
-  });
-}
-
-// Générer courses
-const coursesContent = document.getElementById('coursesContent');
-let totalGeneral = 0;
-let copyText = "🛒 LISTE DE COURSES\n";
-copyText += "Semaine canicule — Sam 21 → Ven 27 juin\n";
-copyText += "Budget < 40 €\n\n";
-
-Object.entries(courses).forEach(([rayon, items]) => {
-  const block = document.createElement('div');
-  block.className = 'rayon-block';
-  let total = 0;
-  const emoji = rayon.split(' ')[0];
-  const label = rayon.split(' ').slice(1).join(' ');
-  copyText += `${rayon}\n`;
-
-  block.innerHTML = `<div class="rayon-title">${rayon}</div>`;
-  items.forEach(item => {
-    total += item.prix;
-    totalGeneral += item.prix;
-    copyText += `  □ ${item.name} — ${item.prix.toFixed(2)} €\n`;
-    const el = document.createElement('div');
-    el.className = 'course-item';
-    el.innerHTML = `<span class="course-name">${item.name}</span><span class="course-price">${item.prix.toFixed(2)} €</span>`;
-    block.appendChild(el);
-  });
-  copyText += `  Total rayon : ${total.toFixed(2)} €\n\n`;
-  coursesContent.appendChild(block);
-});
-
-copyText += `━━━━━━━━━━━━━━━━━━━━\nTOTAL : ${totalGeneral.toFixed(2)} € / budget 40 €\n`;
-
-const totalBar = document.createElement('div');
-totalBar.className = 'total-bar';
-totalBar.innerHTML = `
-  <div>
-    <div class="total-label">Total estimé</div>
-    <div class="total-budget">Budget : &lt; 40 €</div>
   </div>
-  <div class="total-amount">${totalGeneral.toFixed(2)} €</div>
-`;
-coursesContent.appendChild(totalBar);
 
-function showTab(id, btn) {
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  btn.classList.add('active');
-}
+  <div id="loading-screen" class="screen hidden">
+    <div class="loading-wrap">
+      <div class="loading-spinner"></div>
+      <p id="loading-text">Franck prépare ta semaine...</p>
+    </div>
+  </div>
 
-function copyCourses() {
-  navigator.clipboard.writeText(copyText).then(() => {
-    const toast = document.getElementById('toast');
-    toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 2500);
-  });
-}
-</script>
+  <script src="app.js"></script>
 </body>
 </html>
