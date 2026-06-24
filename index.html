@@ -46,9 +46,12 @@
         </div>
       </div>
       <div class="header-actions">
+        <div class="streak-badge" id="streak-badge">🔥 <span id="streak-count">0</span></div>
+        <button id="marche-btn" class="btn-ghost">🛒 Marché</button>
+        <button id="share-btn" class="btn-ghost" onclick="shareePlanning()">📤 Partager</button>
         <button id="tonight-btn" class="btn-tonight" title="Ce soir j'ai la flemme">⚡ Ce soir</button>
         <button id="new-week-btn" class="btn-ghost">+ Semaine</button>
-        <button id="reset-week-btn" class="btn-ghost danger">↺ Recommencer</button>
+        <button id="reset-week-btn" class="btn-ghost danger">↺</button>
       </div>
     </header>
 
@@ -57,6 +60,7 @@
       <button class="tab" data-tab="courses">🛒 Courses</button>
       <button class="tab" data-tab="inventaire">📦 Inventaire</button>
       <button class="tab" data-tab="historique">📖 Historique</button>
+      <button class="tab" data-tab="stats">📊 Stats</button>
     </nav>
 
     <main class="app-main">
@@ -91,6 +95,11 @@
         <div id="historique-list" class="historique-list"></div>
       </section>
 
+      <!-- STATS TAB -->
+      <section id="tab-stats" class="tab-content">
+        <div id="stats-content"></div>
+      </section>
+
     </main>
 
     <!-- MODAL RECETTE -->
@@ -115,6 +124,14 @@
           <button id="tonight-generate-btn" class="btn-primary" style="width:100%;margin-top:1rem">Générer un repas rapide</button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- MODAL MARCHÉ -->
+  <div id="marche-modal" class="modal-overlay hidden">
+    <div class="modal-card marche-modal-card">
+      <button onclick="closeModal('marche-modal')" class="modal-close">✕</button>
+      <div id="marche-content"></div>
     </div>
   </div>
 

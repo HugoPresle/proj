@@ -56,7 +56,7 @@ Si pas de quantité précise, mets "—".`;
 
 // ── STATE ──────────────────────────────────────────────────────
 let step = 0, answers = {}, conversationHistory = [], currentData = null;
-let inventaire = [], historique = [], ratings = {};
+let inventaire = [], historique = [], ratings = {}, repaisFaits = {}, streak = 0;
 
 // ── LOADING ────────────────────────────────────────────────────
 const MSGS = ["🐀 En train d'appâter Ratatouille...","🍅 Récolte des tomates...","🔪 Julienne de carottes...","🧅 Les oignons font pleurer...","🫕 Mijotage à feu doux...","🧄 Négociation avec l'ail...","🌿 Cueillette des herbes...","🍳 Chauffage de la poêle...","🥄 Goûtage qualité...","🧑‍🍳 Consultation des grimoires...","🛒 Passage au marché...","🥚 Comptage des œufs..."];
@@ -124,7 +124,7 @@ async function loadFromGist() {
 }
 
 async function persistAll() {
-  await saveToGist({ planning: currentData, inventaire, historique, ratings });
+  await saveToGist({ planning: currentData, inventaire, historique, ratings, repaisFaits, streak });
 }
 
 // ── INVENTAIRE ─────────────────────────────────────────────────
@@ -321,6 +321,7 @@ function renderAgenda(data) {
   el.innerHTML = '';
   data.jours.forEach((jour, i) => {
     const isToday = jour.jour === today;
+    const isFait = isRepaisFait(jour.jour, jour.plat);
     const rating = getRating(jour.jour, jour.plat);
     const allInStock = jour.ingredients && jour.ingredients.every(ing => ing.dans_inventaire);
     const dayNum = getDayNum(jour.jour, data.semaine);
@@ -338,11 +339,13 @@ function renderAgenda(data) {
             <span class="badge badge-time">⏱ ${jour.temps}</span>
             ${jour.flemme?'<span class="badge badge-flemme">⚡ flemme</span>':''}
             ${allInStock?'<span class="badge badge-stock">✓ tout en stock</span>':''}
+            ${isFait?'<span class="badge badge-stock">✓ fait</span>':''}
             ${rating===1?'<span class="badge badge-rating-good">👍 aimé</span>':rating===-1?'<span class="badge badge-rating-bad">👎 pas aimé</span>':''}
           </div>
         </div>
         <div class="agenda-actions">
-          <button class="agenda-change-btn" data-idx="${i}" onclick="event.stopPropagation(); changeDay(${i})">↺ changer</button>
+          <button class="agenda-done-btn${isFait?' active':''}" onclick="event.stopPropagation(); toggleRepaisFait('${jour.jour}','${jour.plat}')">${isFait?'✓ Fait':'✓ Fait ?'}</button>
+          <button class="agenda-change-btn" data-idx="${i}" onclick="event.stopPropagation(); changeDay(${i})">↺</button>
           <div class="agenda-rating">
             <button class="rating-btn${rating===1?' active':''}" onclick="event.stopPropagation(); setRating('${jour.jour}','${jour.plat}',1)" title="J'ai aimé">👍</button>
             <button class="rating-btn${rating===-1?' active':''}" onclick="event.stopPropagation(); setRating('${jour.jour}','${jour.plat}',-1)" title="Pas aimé">👎</button>
@@ -458,6 +461,260 @@ function updateModalRating(btn, type) {
   btn.classList.add('active');
 }
 
+// ── REPAS FAITS & STREAK ───────────────────────────────────────
+function toggleRepaisFait(jourNom, platNom) {
+  const key = `${jourNom}__${platNom}`;
+  repaisFaits[key] = !repaisFaits[key];
+  recalcStreak();
+  persistAll();
+  renderAgenda(currentData);
+  renderStats();
+}
+
+function isRepaisFait(jourNom, platNom) {
+  return !!repaisFaits[`${jourNom}__${platNom}`];
+}
+
+function recalcStreak() {
+  if (!currentData) return;
+  const days = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+  const today = getTodayDay();
+  const todayIdx = days.indexOf(today);
+  let count = 0;
+  for (let i = 0; i <= todayIdx; i++) {
+    const jour = currentData.jours[i];
+    if (jour && isRepaisFait(jour.jour, jour.plat)) count++;
+    else if (i < todayIdx) { count = 0; } // trou dans le streak
+  }
+  streak = count;
+  const el = document.getElementById('streak-count');
+  if (el) el.textContent = streak;
+}
+
+// ── STATS ───────────────────────────────────────────────────────
+function renderStats() {
+  const el = document.getElementById('stats-content');
+  if (!el) return;
+
+  const totalFaits = Object.values(repaisFaits).filter(Boolean).length;
+  const totalSemaines = historique.length;
+  const platsLikes = Object.entries(ratings).filter(([,v])=>v===1).length;
+  const platsDislike = Object.entries(ratings).filter(([,v])=>v===-1).length;
+
+  // Top plats aimés
+  const topPlats = Object.entries(ratings)
+    .filter(([,v])=>v===1)
+    .map(([k])=>k.split('__')[1])
+    .slice(0,5);
+
+  // Ingrédients inventaire les plus utilisés
+  const invCount = inventaire.length;
+
+  el.innerHTML = `
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">🔥</div>
+        <div class="stat-value">${streak}</div>
+        <div class="stat-label">Streak actuel</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">✅</div>
+        <div class="stat-value">${totalFaits}</div>
+        <div class="stat-label">Repas faits cette semaine</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📅</div>
+        <div class="stat-value">${totalSemaines}</div>
+        <div class="stat-label">Semaines planifiées</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📦</div>
+        <div class="stat-value">${invCount}</div>
+        <div class="stat-label">Articles en stock</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">👍</div>
+        <div class="stat-value">${platsLikes}</div>
+        <div class="stat-label">Plats aimés</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">👎</div>
+        <div class="stat-value">${platsDislike}</div>
+        <div class="stat-label">Plats pas aimés</div>
+      </div>
+    </div>
+    ${topPlats.length ? `
+      <div class="stats-section">
+        <div class="stats-section-title">Tes plats préférés</div>
+        <div class="stats-plats">${topPlats.map(p=>`<span class="hist-plat liked">👍 ${p}</span>`).join('')}</div>
+      </div>
+    ` : ''}
+  `;
+}
+
+// ── MODE MARCHÉ ─────────────────────────────────────────────────
+function openMarcheMode() {
+  if (!currentData) return;
+  const modal = document.getElementById('marche-modal');
+  const content = document.getElementById('marche-content');
+  content.innerHTML = `
+    <div class="marche-header">
+      <h2 class="marche-title">🛒 Liste de courses</h2>
+      <p class="marche-week">${currentData.semaine}</p>
+    </div>
+    ${currentData.courses.map(rayon => `
+      <div class="marche-rayon">
+        <div class="marche-rayon-title">${rayon.rayon}</div>
+        ${rayon.items.map(item => {
+          const bought = inventaire.find(i => i.nom.toLowerCase()===item.nom.toLowerCase());
+          const id = `m-${item.nom.replace(/\s+/g,'-').replace(/[^a-zA-Z0-9-]/g,'')}`;
+          return `
+            <label class="marche-item${bought?' done':''}" for="${id}">
+              <input type="checkbox" id="${id}" ${bought?'checked':''} onchange="toggleMarcheItem('${item.nom.replace(/'/g,"\\'")}', this.checked, this)" />
+              <span class="marche-check-box"></span>
+              <span class="marche-nom">${item.nom}</span>
+              <span class="marche-prix">${item.prix}</span>
+            </label>
+          `;
+        }).join('')}
+      </div>
+    `).join('')}
+    <div class="marche-total">
+      <span>Total</span><span>${currentData.total}</span>
+    </div>
+  `;
+  modal.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function toggleMarcheItem(nom, checked, input) {
+  toggleCourseItem(nom, checked);
+  const label = input.closest('.marche-item');
+  label.classList.toggle('done', checked);
+  // Sync avec l'onglet courses
+  renderCourses(currentData.courses, currentData.total);
+}
+
+// ── PARTAGE PLANNING ────────────────────────────────────────────
+async function shareePlanning() {
+  if (!currentData) return;
+  const btn = document.getElementById('share-btn');
+  btn.textContent = '⏳ Génération...';
+  btn.disabled = true;
+
+  try {
+    // Créer un canvas avec le planning
+    const canvas = document.createElement('canvas');
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = 800 * dpr;
+    canvas.height = 900 * dpr;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+
+    // Fond
+    ctx.fillStyle = '#FAF7F0';
+    ctx.fillRect(0, 0, 800, 900);
+
+    // Header
+    ctx.fillStyle = '#D4611A';
+    ctx.fillRect(0, 0, 800, 80);
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 28px serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('🍳 Franck le Cuisto', 400, 38);
+    ctx.font = '16px monospace';
+    ctx.fillText(currentData.semaine, 400, 62);
+
+    // Jours
+    const days = currentData.jours;
+    const colW = 800 / 7;
+    ctx.textAlign = 'center';
+
+    days.forEach((jour, i) => {
+      const x = i * colW;
+      const isToday = jour.jour === getTodayDay();
+
+      // Bg colonne
+      ctx.fillStyle = isToday ? '#FDF0E4' : (i%2===0 ? '#FFFCF5' : '#FAF7F0');
+      ctx.fillRect(x, 80, colW, 820);
+
+      // Bordure
+      ctx.strokeStyle = '#DDD0B8';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x, 80);
+      ctx.lineTo(x, 900);
+      ctx.stroke();
+
+      // Jour
+      ctx.fillStyle = isToday ? '#D4611A' : '#9A8060';
+      ctx.font = 'bold 11px monospace';
+      ctx.fillText(jour.jour.slice(0,3).toUpperCase(), x + colW/2, 105);
+
+      // Plat (wrap text)
+      ctx.fillStyle = '#2C1F0E';
+      ctx.font = 'bold 13px serif';
+      const words = jour.plat.split(' ');
+      let line = '', lines = [], y = 140;
+      words.forEach(w => {
+        const test = line + w + ' ';
+        if (ctx.measureText(test).width > colW - 12) { lines.push(line); line = w + ' '; }
+        else line = test;
+      });
+      lines.push(line);
+      lines.slice(0,3).forEach((l,li) => {
+        ctx.fillText(l.trim(), x + colW/2, y + li*18);
+      });
+
+      // Temps
+      ctx.fillStyle = '#9A8060';
+      ctx.font = '11px monospace';
+      ctx.fillText('⏱ ' + jour.temps, x + colW/2, 210);
+
+      // Flemme badge
+      if (jour.flemme) {
+        ctx.fillStyle = '#C49020';
+        ctx.font = 'bold 10px monospace';
+        ctx.fillText('⚡ flemme', x + colW/2, 228);
+      }
+    });
+
+    // Footer
+    ctx.fillStyle = '#E8E0CC';
+    ctx.fillRect(0, 860, 800, 40);
+    ctx.fillStyle = '#9A8060';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Généré avec Franck le Cuisto 🍳', 400, 885);
+
+    // Export
+    canvas.toBlob(async blob => {
+      try {
+        if (navigator.share && navigator.canShare({files:[new File([blob],'planning.png',{type:'image/png'})]})) {
+          await navigator.share({
+            title: 'Mon planning repas',
+            text: currentData.semaine,
+            files: [new File([blob], 'planning.png', {type:'image/png'})]
+          });
+        } else {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url; a.download = 'planning-semaine.png';
+          a.click();
+          URL.revokeObjectURL(url);
+        }
+      } catch(e) { console.log('Share cancelled'); }
+      btn.textContent = '📤 Partager';
+      btn.disabled = false;
+    }, 'image/png');
+
+  } catch(e) {
+    console.error('Share error:', e);
+    btn.textContent = '📤 Partager';
+    btn.disabled = false;
+  }
+}
+
 // ── COACH PAR ÉTAPE ────────────────────────────────────────────
 async function toggleStepCoach(btn, platNom, stepIdx, stepText) {
   const coachEl = btn.nextElementSibling;
@@ -542,6 +799,7 @@ function renderPlanning(data) {
   renderCourses(data.courses, data.total);
   renderInventaire();
   renderHistorique();
+  recalcStreak();
   showScreen('planning-screen');
 }
 
@@ -635,6 +893,8 @@ async function init() {
     if (saved.inventaire) inventaire = saved.inventaire;
     if (saved.historique) historique = saved.historique;
     if (saved.ratings) ratings = saved.ratings;
+    if (saved.repaisFaits) repaisFaits = saved.repaisFaits;
+    if (saved.streak) streak = saved.streak;
     const planning = saved.planning || (saved.jours ? saved : null);
     if (planning?.jours?.length === 7) { renderPlanning(planning); return; }
   }
@@ -649,6 +909,8 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('new-week-btn').addEventListener('click', startChat);
   document.getElementById('reset-week-btn').addEventListener('click', resetWeek);
   document.getElementById('tonight-btn').addEventListener('click', openTonightModal);
+  document.getElementById('marche-btn').addEventListener('click', openMarcheMode);
+  document.getElementById('marche-modal').addEventListener('click', e => { if(e.target.id==='marche-modal') closeModal('marche-modal'); });
   document.getElementById('tonight-generate-btn').addEventListener('click', generateTonight);
   document.getElementById('tonight-modal-close').addEventListener('click', () => closeModal('tonight-modal'));
   document.getElementById('tonight-modal').addEventListener('click', e => { if (e.target.id==='tonight-modal') closeModal('tonight-modal'); });
@@ -667,6 +929,7 @@ document.addEventListener('DOMContentLoaded', () => {
       tab.classList.add('active');
       document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
       if (tab.dataset.tab==='historique') renderHistorique();
+      if (tab.dataset.tab==='stats') { renderStats(); recalcStreak(); }
     });
   });
 });
