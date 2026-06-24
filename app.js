@@ -1,109 +1,69 @@
-// ── SYSTEM PROMPT ──────────────────────────────────────────────
-const SYSTEM_PROMPT = `Tu es l'assistant repas de Franck. Ton rôle : l'aider à planifier ses repas de la semaine.
+// ── PROMPTS ────────────────────────────────────────────────────
+const SYSTEM_PROMPT = `Tu es l'assistant repas de Franck. Aide-le à planifier ses repas de la semaine.
 
-PROFIL DE FRANCK
-- 26 ans, musculation et skate
-- Apprend à cuisiner, niveau débutant
-- Mange seul, pour 1 personne
-- Équipement : 2 plaques, 2 casseroles, 2 poêles (dont une poêle à crêpes). Pas de four, pas de micro-ondes.
+PROFIL
+- 26 ans, musculation et skate, apprend à cuisiner
+- Mange seul, 1 personne
+- Équipement : 2 plaques, 2 casseroles, 2 poêles (dont une à crêpes). Pas de four, pas de micro-ondes.
 - Objectif : arrêter de sauter des repas, découvrir des plats simples
 
-DÉROULEMENT
-Pose ces 3 questions dans l'ordre, une par une :
-1. "Quel est ton budget courses cette semaine ? (en €)"
-2. Affiche l'inventaire fourni et demande : "Tu as autre chose ?"
-3. "Des aliments que tu veux éviter cette semaine ?"
+DÉROULEMENT — 3 questions dans l'ordre, une par une :
+1. Budget courses cette semaine (en €)
+2. Affiche l'inventaire fourni, demande s'il y a autre chose
+3. Aliments à éviter cette semaine
 
-Une fois les 3 réponses, réponds UNIQUEMENT avec un objet JSON valide (pas de texte, pas de backticks) :
-
+Ensuite réponds UNIQUEMENT avec un JSON valide (pas de texte, pas de backticks) :
 {
-  "semaine": "Semaine du [date lundi] au [date dimanche]",
-  "couleur": "#[couleur hex chaude/naturelle différente chaque semaine, tons verts oranges ambrés]",
+  "semaine": "Semaine du [lundi JJ/MM] au [dimanche JJ/MM]",
+  "couleur": "#[hex chaud/naturel différent chaque semaine]",
   "jours": [
     {
-      "jour": "Lundi",
-      "plat": "Nom du plat",
-      "flemme": false,
-      "temps": "25 min",
-      "ingredients": [{ "nom": "Poulet", "quantite": "200g", "dans_inventaire": true }],
-      "etapes": ["Couper le poulet en morceaux.", "Faire chauffer la poêle."],
-      "conseil": "Astuce si besoin"
+      "jour": "Lundi", "plat": "Nom", "flemme": false, "temps": "25 min",
+      "ingredients": [{"nom": "Poulet", "quantite": "200g", "dans_inventaire": true}],
+      "etapes": ["Étape 1.", "Étape 2."],
+      "conseil": "Astuce ou ordre de cuisson"
     }
   ],
-  "courses": [
-    {
-      "rayon": "Viandes & poissons",
-      "items": [{ "nom": "Blanc de poulet", "prix": "3.50€" }]
-    }
-  ],
+  "courses": [{"rayon": "Viandes", "items": [{"nom": "Poulet", "prix": "3.50€"}]}],
   "total": "45€"
 }
 
-RÈGLES
-- Exactement 7 jours : Lundi, Mardi, Mercredi, Jeudi, Vendredi, Samedi, Dimanche
-- 1 à 2 repas flemme max (flemme: true), 5-10 min
-- Autres : 20-40 min, uniquement plaque/poêle/casserole
-- PRIORITÉ INVENTAIRE : utilise en priorité ce que Franck a déjà. dans_inventaire: true si l'ingrédient est dans l'inventaire fourni
-- La liste de courses ne contient QUE ce qui manque (pas ce qui est en inventaire, sauf si quantité insuffisante)
-- Légumes de saison, plats variés d'une semaine à l'autre
-- Langage simple, ne jamais supposer que Franck sait faire un plat`;
+RÈGLES ABSOLUES
+- 7 jours : Lundi, Mardi, Mercredi, Jeudi, Vendredi, Samedi, Dimanche
+- 1-2 repas flemme max (5-10 min), autres 20-40 min
+- Uniquement plaque/poêle/casserole
+- PRIORITÉ INVENTAIRE : utilise ce que Franck a déjà, dans_inventaire:true si c'est le cas
+- Courses = seulement ce qui manque
+- Légumes de saison, plats variés, langage simple`;
 
-const SINGLE_DAY_PROMPT = `Tu es l'assistant repas de Franck. Génère UN SEUL repas de remplacement.
+const SINGLE_DAY_PROMPT = `Génère UN repas de remplacement pour Franck (26 ans, 1 personne, 2 plaques/poêles/casseroles, pas de four).
+Réponds UNIQUEMENT avec un JSON valide (pas de backticks) :
+{"plat":"Nom","flemme":false,"temps":"20 min","ingredients":[{"nom":"...","quantite":"...","dans_inventaire":false}],"etapes":["..."],"conseil":"..."}
+Règles : plat différent de l'actuel, utilise l'inventaire en priorité, 20-40 min ou 5-10 min si flemme.`;
 
-PROFIL : 26 ans, 1 personne, 2 plaques/poêles/casseroles, pas de four ni micro-ondes, niveau débutant.
+const TONIGHT_PROMPT = `Franck a la flemme ce soir. Propose UN repas ultra-rapide (5-15 min max) avec ce qu'il a en inventaire.
+Réponds UNIQUEMENT avec un JSON valide (pas de backticks) :
+{"plat":"Nom","temps":"10 min","ingredients":[{"nom":"...","quantite":"..."}],"etapes":["..."],"conseil":"..."}`;
 
-Réponds UNIQUEMENT avec un objet JSON (pas de texte, pas de backticks) :
-{
-  "plat": "Nom du plat",
-  "flemme": false,
-  "temps": "20 min",
-  "ingredients": [{ "nom": "...", "quantite": "...", "dans_inventaire": false }],
-  "etapes": ["..."],
-  "conseil": "..."
-}
-
-RÈGLES : plat différent de celui remplacé, utilise l'inventaire fourni en priorité, 20-40 min ou 5-10 min si flemme, uniquement plaque/poêle/casserole.`;
-
-const CHAT_INTRO = "Salut ! On planifie ta semaine 🍳";
-const Q1 = "Quel est ton budget courses cette semaine ? (en €)";
-const Q3 = "Des aliments que tu veux éviter cette semaine ?";
+const PARSE_PROMPT = `Extrait chaque ingrédient/aliment de ce texte. Normalise les noms (ex: "lhuile dolive" → "huile d'olive").
+Réponds UNIQUEMENT avec un tableau JSON valide (pas de backticks) :
+[{"nom": "riz", "qty": "1 sachet"}, {"nom": "huile d'olive", "qty": "—"}]
+Si pas de quantité précise, mets "—".`;
 
 // ── STATE ──────────────────────────────────────────────────────
-let step = 0;
-let answers = {};
-let conversationHistory = [];
-let currentData = null;
-let inventaire = [];
+let step = 0, answers = {}, conversationHistory = [], currentData = null;
+let inventaire = [], historique = [], ratings = {};
 
 // ── LOADING ────────────────────────────────────────────────────
-const LOADING_MESSAGES = [
-  "🐀 En train d'appâter Ratatouille...",
-  "🍅 Récolte des tomates du jardin...",
-  "🔪 Julienne de carottes en cours...",
-  "🧅 Les oignons font pleurer le chef...",
-  "🫕 Mijotage à feu doux...",
-  "🧄 Négociation avec l'ail...",
-  "🌿 Cueillette des herbes fraîches...",
-  "🍳 Chauffage de la poêle à crêpes...",
-  "🥄 Goûtage qualité en cours...",
-  "🧑‍🍳 Le chef consulte ses grimoires...",
-  "🛒 Passage au marché du coin...",
-  "🥚 Comptage des œufs...",
-];
+const MSGS = ["🐀 En train d'appâter Ratatouille...","🍅 Récolte des tomates...","🔪 Julienne de carottes...","🧅 Les oignons font pleurer...","🫕 Mijotage à feu doux...","🧄 Négociation avec l'ail...","🌿 Cueillette des herbes...","🍳 Chauffage de la poêle...","🥄 Goûtage qualité...","🧑‍🍳 Consultation des grimoires...","🛒 Passage au marché...","🥚 Comptage des œufs..."];
 let loadingInterval = null;
-
-function startLoadingMessages() {
+function startLoading(txt) {
   let i = 0;
   const el = document.getElementById('loading-text');
-  el.textContent = LOADING_MESSAGES[0];
-  loadingInterval = setInterval(() => {
-    i = (i + 1) % LOADING_MESSAGES.length;
-    el.textContent = LOADING_MESSAGES[i];
-  }, 2000);
+  el.textContent = txt || MSGS[0];
+  loadingInterval = setInterval(() => { i = (i+1)%MSGS.length; el.textContent = MSGS[i]; }, 2000);
 }
-function stopLoadingMessages() {
-  if (loadingInterval) { clearInterval(loadingInterval); loadingInterval = null; }
-}
+function stopLoading() { if (loadingInterval) { clearInterval(loadingInterval); loadingInterval = null; } }
 
 // ── SCREENS ────────────────────────────────────────────────────
 function showScreen(id) {
@@ -113,7 +73,6 @@ function showScreen(id) {
   el.classList.add('active');
 }
 
-// ── CHAT ───────────────────────────────────────────────────────
 function addMsg(text, type) {
   const wrap = document.getElementById('chat-messages');
   const div = document.createElement('div');
@@ -121,100 +80,76 @@ function addMsg(text, type) {
   div.textContent = text;
   wrap.appendChild(div);
   wrap.scrollTop = wrap.scrollHeight;
-}
-
-// ── PARSE INVENTAIRE DEPUIS TEXTE ──────────────────────────────
-function parseInventaireFromText(text) {
-  // Sépare par virgules, "et", "de", retours à la ligne
-  const raw = text
-    .replace(/\b(de l['']|du |de la |des |un |une |le |la |les )\b/gi, '')
-    .split(/,|;|\bet\b|\n/i)
-    .map(s => s.trim())
-    .filter(s => s.length > 1);
-
-  const nouveaux = [];
-  raw.forEach(item => {
-    // Extrait quantité si présente (ex: "500g de riz", "1 sachet de riz")
-    const qtyMatch = item.match(/^([\d.,]+\s*(?:g|kg|ml|l|cl|sachet[s]?|boîte[s]?|pot[s]?|bouteille[s]?|paquet[s]?|tranche[s]?|œuf[s]?|oeuf[s]?)?)\s+(.+)/i)
-                  || item.match(/^(\d+)\s+(.+)/i);
-    let nom, qty;
-    if (qtyMatch) {
-      qty = qtyMatch[1].trim();
-      nom = qtyMatch[2].trim();
-    } else {
-      nom = item.trim();
-      qty = '—';
-    }
-    nom = nom.replace(/^(de |d'|du |de la |des )/i, '').trim();
-    if (nom.length < 2) return;
-
-    // Vérifie si déjà dans l'inventaire
-    const exists = inventaire.find(i => i.nom.toLowerCase() === nom.toLowerCase());
-    if (!exists) {
-      inventaire.push({ nom, qty });
-      nouveaux.push(nom);
-    }
-  });
-  return nouveaux;
+  return div;
 }
 
 // ── API ────────────────────────────────────────────────────────
-async function callAPI(messages, systemOverride) {
-  console.log('🍳 [Franck] Envoi requête à Claude...');
+async function callAPI(messages, system) {
   const res = await fetch('/api?action=chat', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ system: systemOverride || SYSTEM_PROMPT, messages })
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ system: system||SYSTEM_PROMPT, messages })
   });
-  console.log('📡 [Franck] Status:', res.status);
+  console.log('📡 Status:', res.status);
   const text = await res.text();
-  console.log('📦 [Franck] Réponse:', text.slice(0, 300) + (text.length > 300 ? '...' : ''));
+  console.log('📦 Réponse:', text.slice(0,200));
   const data = JSON.parse(text);
   return data.content?.[0]?.text || '';
+}
+
+function parseJSON(str) {
+  let clean = str.trim().replace(/^```[a-z]*\n?/,'').replace(/```$/,'').trim();
+  return JSON.parse(clean);
 }
 
 // ── GIST ───────────────────────────────────────────────────────
 async function saveToGist(payload) {
   try {
     await fetch('/api?action=save', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ data: payload })
     });
-    console.log('💾 [Franck] Sauvegardé');
-  } catch (e) { console.log('❌ Gist save error:', e); }
+    console.log('💾 Sauvegardé');
+  } catch(e) { console.log('❌ Save error:', e); }
 }
 
 async function loadFromGist() {
   try {
     const res = await fetch('/api?action=load');
-    const text = await res.text();
-    return JSON.parse(text);
-  } catch (e) { return null; }
+    return JSON.parse(await res.text());
+  } catch(e) { return null; }
 }
 
 async function persistAll() {
-  await saveToGist({ planning: currentData, inventaire });
+  await saveToGist({ planning: currentData, inventaire, historique, ratings });
 }
 
 // ── INVENTAIRE ─────────────────────────────────────────────────
 function renderInventaire() {
-  const list = document.getElementById('inventaire-list');
-  if (!inventaire.length) {
-    list.innerHTML = '<p class="inv-empty">Aucun article. Ajoute ce que tu as chez toi !</p>';
-    return;
-  }
-  list.innerHTML = inventaire.map((item, i) => `
+  const el = document.getElementById('inventaire-list');
+  if (!inventaire.length) { el.innerHTML = '<p class="inv-empty">Aucun article. Ajoute ce que tu as !</p>'; return; }
+  el.innerHTML = inventaire.map((item, i) => `
     <div class="inv-item">
       <span class="inv-nom">${item.nom}</span>
-      <span class="inv-qty">${item.qty}</span>
+      <input class="inv-qty-input" value="${item.qty}" onchange="updateInvQty(${i}, this.value)" title="Cliquer pour modifier" />
       <button class="inv-btn del" onclick="deleteInvItem(${i})">✕</button>
     </div>
   `).join('');
 }
 
+function updateInvQty(i, val) {
+  inventaire[i].qty = val;
+  persistAll();
+}
+
 function deleteInvItem(i) {
-  inventaire.splice(i, 1);
+  inventaire.splice(i,1);
+  renderInventaire();
+  persistAll();
+}
+
+function clearInventaire() {
+  if (!confirm('Vider tout l\'inventaire ?')) return;
+  inventaire = [];
   renderInventaire();
   persistAll();
 }
@@ -223,8 +158,7 @@ function addInvItem() {
   const nom = document.getElementById('inv-nom').value.trim();
   const qty = document.getElementById('inv-qty').value.trim();
   if (!nom) return;
-  const exists = inventaire.find(i => i.nom.toLowerCase() === nom.toLowerCase());
-  if (!exists) inventaire.push({ nom, qty: qty || '—' });
+  if (!inventaire.find(i => i.nom.toLowerCase()===nom.toLowerCase())) inventaire.push({nom, qty: qty||'—'});
   document.getElementById('inv-nom').value = '';
   document.getElementById('inv-qty').value = '';
   renderInventaire();
@@ -232,23 +166,38 @@ function addInvItem() {
 }
 
 function inventaireToText() {
-  if (!inventaire.length) return 'Aucun article en stock.';
+  if (!inventaire.length) return 'Aucun article.';
   return inventaire.map(i => `- ${i.nom} : ${i.qty}`).join('\n');
 }
 
-// ── COURSES AVEC CHECKBOXES ────────────────────────────────────
+async function parseInventaireWithClaude(text) {
+  if (!text || text.trim().length < 2) return [];
+  try {
+    const reply = await callAPI([{role:'user', content:`Texte : "${text.replace(/"/g,"'")}"`}], PARSE_PROMPT);
+    const parsed = parseJSON(reply);
+    const nouveaux = [];
+    parsed.forEach(item => {
+      if (!item.nom || item.nom.length < 2) return;
+      if (!inventaire.find(i => i.nom.toLowerCase()===item.nom.toLowerCase())) {
+        inventaire.push({nom: item.nom, qty: item.qty||'—'});
+        nouveaux.push(item.nom);
+      }
+    });
+    return nouveaux;
+  } catch(e) { console.error('❌ Parse error:', e); return []; }
+}
+
+// ── COURSES ────────────────────────────────────────────────────
 function toggleCourseItem(nom, checked) {
   if (checked) {
-    const exists = inventaire.find(i => i.nom.toLowerCase() === nom.toLowerCase());
-    if (!exists) {
-      inventaire.push({ nom, qty: '✓ acheté' });
-      renderInventaire();
-      persistAll();
-    }
+    if (!inventaire.find(i => i.nom.toLowerCase()===nom.toLowerCase()))
+      inventaire.push({nom, qty:'✓ acheté'});
   } else {
-    const idx = inventaire.findIndex(i => i.nom.toLowerCase() === nom.toLowerCase() && i.qty === '✓ acheté');
-    if (idx !== -1) { inventaire.splice(idx, 1); renderInventaire(); persistAll(); }
+    const idx = inventaire.findIndex(i => i.nom.toLowerCase()===nom.toLowerCase() && i.qty==='✓ acheté');
+    if (idx!==-1) inventaire.splice(idx,1);
   }
+  renderInventaire();
+  persistAll();
 }
 
 function renderCourses(courses, total) {
@@ -259,13 +208,13 @@ function renderCourses(courses, total) {
     block.className = 'rayon-block';
     block.innerHTML = `<div class="rayon-title">${rayon.rayon}</div>`;
     rayon.items.forEach(item => {
-      const alreadyBought = inventaire.find(i => i.nom.toLowerCase() === item.nom.toLowerCase());
+      const bought = inventaire.find(i => i.nom.toLowerCase()===item.nom.toLowerCase());
       const row = document.createElement('div');
-      row.className = `course-item${alreadyBought ? ' done' : ''}`;
-      const id = `chk-${item.nom.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '')}`;
+      row.className = `course-item${bought?' done':''}`;
+      const id = `chk-${item.nom.replace(/\s+/g,'-').replace(/[^a-zA-Z0-9-]/g,'')}`;
       row.innerHTML = `
         <label class="course-label" for="${id}">
-          <input type="checkbox" id="${id}" class="course-check" ${alreadyBought ? 'checked' : ''} />
+          <input type="checkbox" id="${id}" class="course-check" ${bought?'checked':''} />
           <span class="course-check-box"></span>
           <span class="course-nom">${item.nom}</span>
         </label>
@@ -285,90 +234,196 @@ function renderCourses(courses, total) {
   el.appendChild(tot);
 }
 
-// ── CHANGER UN JOUR ────────────────────────────────────────────
-async function changeDay(jourIndex) {
-  const jour = currentData.jours[jourIndex];
-  const btn = document.querySelector(`[data-change-idx="${jourIndex}"]`);
-  if (btn) { btn.textContent = '...'; btn.disabled = true; }
+// ── RATINGS ────────────────────────────────────────────────────
+function setRating(jourNom, platNom, value) {
+  const key = `${jourNom}__${platNom}`;
+  ratings[key] = value;
+  persistAll();
+  renderAgenda(currentData);
+}
 
+function getRating(jourNom, platNom) {
+  return ratings[`${jourNom}__${platNom}`] || null;
+}
+
+// ── HISTORIQUE ─────────────────────────────────────────────────
+function saveToHistorique(data) {
+  if (!data) return;
+  const exists = historique.find(h => h.semaine === data.semaine);
+  if (!exists) historique.unshift({ semaine: data.semaine, jours: data.jours.map(j => ({jour: j.jour, plat: j.plat})) });
+  if (historique.length > 10) historique = historique.slice(0,10);
+}
+
+function renderHistorique() {
+  const el = document.getElementById('historique-list');
+  if (!historique.length) { el.innerHTML = '<p class="hist-empty">Aucun historique pour l\'instant.</p>'; return; }
+  el.innerHTML = historique.map(h => `
+    <div class="hist-card">
+      <div class="hist-header">
+        <span class="hist-semaine">${h.semaine}</span>
+      </div>
+      <div class="hist-plats">
+        ${h.jours.map(j => {
+          const r = getRating(j.jour, j.plat);
+          const cls = r===1?' liked':r===-1?' disliked':'';
+          return `<span class="hist-plat${cls}">${r===1?'👍 ':r===-1?'👎 ':''}${j.plat}</span>`;
+        }).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── AGENDA ─────────────────────────────────────────────────────
+function getTodayDay() {
+  const days = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+  return days[new Date().getDay()];
+}
+
+function getDayNum(jourNom, semaine) {
   try {
-    const msg = `Inventaire de Franck :\n${inventaireToText()}\n\nRemplace le repas du ${jour.jour} (actuellement : ${jour.plat}). Propose un plat différent en utilisant en priorité l'inventaire. JSON uniquement.`;
-    const reply = await callAPI([{ role: 'user', content: msg }], SINGLE_DAY_PROMPT);
-    let clean = reply.trim().replace(/^```[a-z]*\n?/, '').replace(/```$/, '').trim();
-    const newJour = JSON.parse(clean);
+    const match = semaine.match(/(\d+)\/(\d+)/);
+    if (!match) return '';
+    const days = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+    const idx = days.indexOf(jourNom);
+    if (idx === -1) return '';
+    const startDay = parseInt(match[1]);
+    return String(startDay + idx).padStart(2,'0');
+  } catch(e) { return ''; }
+}
+
+function renderAgenda(data) {
+  const el = document.getElementById('agenda');
+  const today = getTodayDay();
+  el.innerHTML = '';
+  data.jours.forEach((jour, i) => {
+    const isToday = jour.jour === today;
+    const rating = getRating(jour.jour, jour.plat);
+    const allInStock = jour.ingredients && jour.ingredients.every(ing => ing.dans_inventaire);
+    const dayNum = getDayNum(jour.jour, data.semaine);
+    const row = document.createElement('div');
+    row.className = 'agenda-row';
+    row.innerHTML = `
+      <div class="agenda-day${isToday?' today':''}">
+        <span class="agenda-day-name">${jour.jour.slice(0,3)}</span>
+        <span class="agenda-day-num">${dayNum}</span>
+      </div>
+      <div class="agenda-content">
+        <div class="agenda-meal">
+          <div class="agenda-meal-name">${jour.plat}</div>
+          <div class="agenda-badges">
+            <span class="badge badge-time">⏱ ${jour.temps}</span>
+            ${jour.flemme?'<span class="badge badge-flemme">⚡ flemme</span>':''}
+            ${allInStock?'<span class="badge badge-stock">✓ tout en stock</span>':''}
+            ${rating===1?'<span class="badge badge-rating-good">👍 aimé</span>':rating===-1?'<span class="badge badge-rating-bad">👎 pas aimé</span>':''}
+          </div>
+        </div>
+        <div class="agenda-actions">
+          <button class="agenda-change-btn" data-idx="${i}" onclick="event.stopPropagation(); changeDay(${i})">↺ changer</button>
+          <div class="agenda-rating">
+            <button class="rating-btn${rating===1?' active':''}" onclick="event.stopPropagation(); setRating('${jour.jour}','${jour.plat}',1)" title="J'ai aimé">👍</button>
+            <button class="rating-btn${rating===-1?' active':''}" onclick="event.stopPropagation(); setRating('${jour.jour}','${jour.plat}',-1)" title="Pas aimé">👎</button>
+          </div>
+          <span class="agenda-arrow">›</span>
+        </div>
+      </div>
+    `;
+    row.querySelector('.agenda-content').addEventListener('click', () => openRecipe(jour));
+    el.appendChild(row);
+  });
+}
+
+// ── CHANGER 1 JOUR ─────────────────────────────────────────────
+async function changeDay(idx) {
+  const jour = currentData.jours[idx];
+  const btn = document.querySelector(`[data-idx="${idx}"]`);
+  if (btn) { btn.textContent = '...'; btn.disabled = true; }
+  try {
+    const msg = `Inventaire:\n${inventaireToText()}\nRemplace le repas du ${jour.jour} (actuellement: ${jour.plat}). Plat différent, utilise l'inventaire en priorité.`;
+    const reply = await callAPI([{role:'user',content:msg}], SINGLE_DAY_PROMPT);
+    const newJour = parseJSON(reply);
     newJour.jour = jour.jour;
-    currentData.jours[jourIndex] = newJour;
+    currentData.jours[idx] = newJour;
     await persistAll();
-    renderPlanning(currentData);
+    renderAgenda(currentData);
+    renderCourses(currentData.courses, currentData.total);
     console.log('✅ Jour changé:', jour.jour, '→', newJour.plat);
-  } catch (err) {
-    console.error('❌ Erreur changement jour:', err);
-    if (btn) { btn.textContent = '↺'; btn.disabled = false; }
+  } catch(e) {
+    console.error('❌ Erreur changeDay:', e);
+    if (btn) { btn.textContent = '↺ changer'; btn.disabled = false; }
   }
 }
 
-// ── PLANNING RENDER ────────────────────────────────────────────
-function renderPlanning(data) {
-  currentData = data;
+// ── CE SOIR ────────────────────────────────────────────────────
+function openTonightModal() {
+  document.getElementById('tonight-result').innerHTML = '';
+  document.getElementById('tonight-modal').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
 
-  if (data.couleur) {
-    document.documentElement.style.setProperty('--orange', data.couleur);
-  }
-
-  document.getElementById('week-label').textContent = data.semaine || 'Semaine en cours';
-
-  const grid = document.getElementById('days-grid');
-  grid.innerHTML = '';
-  data.jours.forEach((jour, i) => {
-    const card = document.createElement('div');
-    card.className = `day-card${jour.flemme ? ' flemme' : ''}`;
-    card.innerHTML = `
-      <div class="day-label">${jour.jour}</div>
-      <div class="day-meal">${jour.plat}</div>
-      <div class="day-meta">
-        <span class="badge badge-time">⏱ ${jour.temps}</span>
-        ${jour.flemme ? '<span class="badge badge-flemme">⚡ flemme</span>' : ''}
-      </div>
-      <div class="day-footer">
-        <button class="day-change-btn" data-change-idx="${i}" onclick="event.stopPropagation(); changeDay(${i})">↺ changer</button>
-        <span class="day-arrow">→</span>
+async function generateTonight() {
+  const btn = document.getElementById('tonight-generate-btn');
+  btn.textContent = '⏳ En cours...';
+  btn.disabled = true;
+  try {
+    const msg = `Inventaire de Franck:\n${inventaireToText()}\nPropose un repas ultra-rapide avec ce qu'il a.`;
+    const reply = await callAPI([{role:'user',content:msg}], TONIGHT_PROMPT);
+    const recipe = parseJSON(reply);
+    document.getElementById('tonight-result').innerHTML = `
+      <div class="tonight-recipe">
+        <div class="tonight-recipe-name">${recipe.plat} — ${recipe.temps}</div>
+        <div class="modal-section-title" style="margin-top:1rem">Ingrédients</div>
+        <ul class="ingredients-list">${recipe.ingredients.map(i=>`<li><span>${i.nom}</span><span class="ing-qty">${i.quantite}</span></li>`).join('')}</ul>
+        <div class="modal-section-title">Préparation</div>
+        <ol class="steps-list">${recipe.etapes.map(e=>`<li>${e}</li>`).join('')}</ol>
+        ${recipe.conseil?`<div class="tip-box">💡 ${recipe.conseil}</div>`:''}
       </div>
     `;
-    card.addEventListener('click', () => openRecipe(jour));
-    grid.appendChild(card);
-  });
-
-  renderCourses(data.courses, data.total);
-  renderInventaire();
-  showScreen('planning-screen');
+    btn.textContent = '↺ Autre idée';
+    btn.disabled = false;
+  } catch(e) {
+    console.error('❌ Tonight error:', e);
+    btn.textContent = 'Réessayer';
+    btn.disabled = false;
+  }
 }
 
 // ── RECIPE MODAL ───────────────────────────────────────────────
 function openRecipe(jour) {
   const modal = document.getElementById('recipe-modal');
-  const content = document.getElementById('modal-content');
-  const ings = jour.ingredients.map(i =>
-    `<li><span>${i.nom}${i.dans_inventaire ? ' <span style="color:var(--green);font-size:0.7rem">✓ stock</span>' : ''}</span><span class="ing-qty">${i.quantite}</span></li>`
-  ).join('');
-  content.innerHTML = `
+  const rating = getRating(jour.jour, jour.plat);
+  document.getElementById('modal-content').innerHTML = `
     <div class="modal-day">${jour.jour}</div>
     <div class="modal-title">${jour.plat}</div>
-    <div class="day-meta" style="margin-bottom:1.25rem">
+    <div class="agenda-badges" style="margin-bottom:1.25rem">
       <span class="badge badge-time">⏱ ${jour.temps}</span>
-      ${jour.flemme ? '<span class="badge badge-flemme">⚡ flemme</span>' : ''}
+      ${jour.flemme?'<span class="badge badge-flemme">⚡ flemme</span>':''}
     </div>
     <div class="modal-section-title">Ingrédients</div>
-    <ul class="ingredients-list">${ings}</ul>
+    <ul class="ingredients-list">${jour.ingredients.map(i=>`
+      <li><span>${i.nom}${i.dans_inventaire?'<span class="ing-stock">✓ stock</span>':''}</span><span class="ing-qty">${i.quantite}</span></li>
+    `).join('')}</ul>
     <div class="modal-section-title">Préparation</div>
-    <ol class="steps-list">${jour.etapes.map(e => `<li>${e}</li>`).join('')}</ol>
-    ${jour.conseil ? `<div class="tip-box">💡 ${jour.conseil}</div>` : ''}
+    <ol class="steps-list">${jour.etapes.map(e=>`<li>${e}</li>`).join('')}</ol>
+    ${jour.conseil?`<div class="tip-box">💡 ${jour.conseil}</div>`:''}
+    <div class="modal-rating">
+      <span class="modal-rating-label">Ce plat ?</span>
+      <div class="modal-rating-btns">
+        <button class="rating-modal-btn good${rating===1?' active':''}" onclick="setRating('${jour.jour}','${jour.plat}',1); updateModalRating(this, 'good')">👍 J'ai aimé</button>
+        <button class="rating-modal-btn bad${rating===-1?' active':''}" onclick="setRating('${jour.jour}','${jour.plat}',-1); updateModalRating(this, 'bad')">👎 Pas aimé</button>
+      </div>
+    </div>
   `;
   modal.classList.remove('hidden');
   document.body.style.overflow = 'hidden';
 }
 
-function closeModal() {
-  document.getElementById('recipe-modal').classList.add('hidden');
+function updateModalRating(btn, type) {
+  document.querySelectorAll('.rating-modal-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function closeModal(id) {
+  document.getElementById(id||'recipe-modal').classList.add('hidden');
   document.body.style.overflow = '';
 }
 
@@ -376,9 +431,9 @@ function closeModal() {
 function copyCourses() {
   if (!currentData) return;
   let text = `🛒 ${currentData.semaine}\n\n`;
-  currentData.courses.forEach(rayon => {
-    text += `${rayon.rayon.toUpperCase()}\n`;
-    rayon.items.forEach(item => { text += `• ${item.nom} — ${item.prix}\n`; });
+  currentData.courses.forEach(r => {
+    text += `${r.rayon.toUpperCase()}\n`;
+    r.items.forEach(i => { text += `• ${i.nom} — ${i.prix}\n`; });
     text += '\n';
   });
   text += `TOTAL : ${currentData.total}`;
@@ -389,93 +444,95 @@ function copyCourses() {
   });
 }
 
+// ── RENDER PLANNING ────────────────────────────────────────────
+function renderPlanning(data) {
+  currentData = data;
+  if (data.couleur) document.documentElement.style.setProperty('--warm', data.couleur);
+  document.getElementById('week-label').textContent = data.semaine||'Semaine en cours';
+  renderAgenda(data);
+  renderCourses(data.courses, data.total);
+  renderInventaire();
+  renderHistorique();
+  showScreen('planning-screen');
+}
+
 // ── HANDLE SEND ────────────────────────────────────────────────
 async function handleSend() {
   const input = document.getElementById('chat-input');
   const val = input.value.trim();
   if (!val) return;
   input.value = '';
-
   addMsg(val, 'user');
-  conversationHistory.push({ role: 'user', content: val });
+  conversationHistory.push({role:'user', content:val});
 
-  if (step === 0) {
-    answers.budget = val;
-    step++;
-    // Q2 : affiche inventaire + demande le reste
+  if (step===0) {
+    answers.budget = val; step++;
     const invText = inventaireToText();
-    const q2msg = inventaire.length
-      ? `Voilà ce que j'ai dans ton inventaire :\n${invText}\n\nJe vais tout utiliser en priorité. Tu as autre chose qui n'est pas dans cette liste ?`
-      : "Tu as quelque chose dans les placards ou le frigo ?";
-    setTimeout(() => addMsg(q2msg, 'bot'), 400);
-    conversationHistory.push({ role: 'assistant', content: q2msg });
+    const q2 = inventaire.length
+      ? `Voilà ton inventaire :\n${invText}\n\nJe vais tout utiliser en priorité. Tu as autre chose ?`
+      : 'Tu as quelque chose dans les placards ou le frigo ?';
+    setTimeout(() => addMsg(q2,'bot'), 400);
+    conversationHistory.push({role:'assistant', content:q2});
 
-  } else if (step === 1) {
-    answers.placards = val;
-    // Parser ce que l'user a dit et l'ajouter à l'inventaire
-    const nouveaux = parseInventaireFromText(val);
-    if (nouveaux.length) {
-      renderInventaire();
-      persistAll();
-      console.log('📦 [Franck] Ajouté à l\'inventaire:', nouveaux);
-    }
-    step++;
-    setTimeout(() => addMsg(Q3, 'bot'), 400);
-    conversationHistory.push({ role: 'assistant', content: Q3 });
+  } else if (step===1) {
+    answers.placards = val; step++;
+    const tmpMsg = addMsg('⏳ J\'analyse ce que tu as...', 'bot');
+    parseInventaireWithClaude(val).then(nouveaux => {
+      tmpMsg.remove();
+      if (nouveaux.length) {
+        addMsg(`✅ Ajouté : ${nouveaux.join(', ')}`, 'bot');
+        renderInventaire(); persistAll();
+      }
+      setTimeout(() => addMsg('Des aliments que tu veux éviter cette semaine ?', 'bot'), 300);
+      conversationHistory.push({role:'assistant', content:'Des aliments que tu veux éviter ?'});
+    });
 
-  } else if (step === 2) {
-    answers.eviter = val;
-    step++;
-
+  } else if (step===2) {
+    answers.eviter = val; step++;
     showScreen('loading-screen');
-    startLoadingMessages();
-    console.log('🚀 [Franck] Génération du planning...');
-
+    startLoading();
     try {
-      const finalMsg = `Budget: ${answers.budget}\nInventaire complet:\n${inventaireToText()}\nÀ éviter: ${answers.eviter}\n\nGénère maintenant le planning JSON.`;
-      conversationHistory.push({ role: 'user', content: finalMsg });
-
+      const badRatings = Object.entries(ratings).filter(([,v])=>v===-1).map(([k])=>k.split('__')[1]);
+      const ratingHint = badRatings.length ? `\nPlats que Franck n'a pas aimés (à éviter) : ${badRatings.join(', ')}` : '';
+      const finalMsg = `Budget: ${answers.budget}\nInventaire:\n${inventaireToText()}\nAutre: ${answers.placards}\nÀ éviter: ${answers.eviter}${ratingHint}\n\nGénère le planning JSON.`;
+      conversationHistory.push({role:'user',content:finalMsg});
       const reply = await callAPI(conversationHistory);
-      let clean = reply.trim().replace(/^```[a-z]*\n?/, '').replace(/```$/, '').trim();
-
-      const data = JSON.parse(clean);
+      const data = parseJSON(reply);
       currentData = data;
+      saveToHistorique(data);
       await persistAll();
-
-      stopLoadingMessages();
+      stopLoading();
       renderPlanning(data);
-      console.log('🎉 [Franck] Planning prêt !');
-    } catch (err) {
-      stopLoadingMessages();
+      console.log('🎉 Planning prêt !');
+    } catch(e) {
+      stopLoading();
       showScreen('chat-screen');
       addMsg("Oups, une erreur s'est produite. Réessaie !", 'bot');
-      step = 2;
-      console.error('❌ [Franck] Erreur:', err);
+      step=2;
+      console.error('❌', e);
     }
   }
 }
 
-// ── RESET SEMAINE ──────────────────────────────────────────────
+// ── RESET / START ───────────────────────────────────────────────
 function resetWeek() {
   if (!confirm("Recommencer le planning ? L'inventaire reste intact.")) return;
+  if (currentData) saveToHistorique(currentData);
   currentData = null;
-  saveToGist({ planning: null, inventaire });
+  saveToGist({planning:null, inventaire, historique, ratings});
   startChat();
 }
 
-// ── START CHAT ─────────────────────────────────────────────────
 function startChat() {
-  step = 0;
-  answers = {};
-  conversationHistory = [];
-  document.getElementById('chat-messages').innerHTML = '';
+  step=0; answers={}; conversationHistory=[];
+  document.getElementById('chat-messages').innerHTML='';
   showScreen('chat-screen');
   setTimeout(() => {
-    addMsg(CHAT_INTRO, 'bot');
-    conversationHistory.push({ role: 'assistant', content: CHAT_INTRO });
+    addMsg("Salut ! On planifie ta semaine 🍳", 'bot');
+    conversationHistory.push({role:'assistant',content:"Salut !"});
     setTimeout(() => {
-      addMsg(Q1, 'bot');
-      conversationHistory.push({ role: 'assistant', content: Q1 });
+      addMsg("Quel est ton budget courses cette semaine ? (en €)", 'bot');
+      conversationHistory.push({role:'assistant',content:"Budget ?"});
     }, 500);
   }, 150);
 }
@@ -484,15 +541,13 @@ function startChat() {
 async function init() {
   showScreen('loading-screen');
   document.getElementById('loading-text').textContent = 'Chargement...';
-
   const saved = await loadFromGist();
   if (saved) {
     if (saved.inventaire) inventaire = saved.inventaire;
+    if (saved.historique) historique = saved.historique;
+    if (saved.ratings) ratings = saved.ratings;
     const planning = saved.planning || (saved.jours ? saved : null);
-    if (planning && planning.jours && planning.jours.length === 7) {
-      renderPlanning(planning);
-      return;
-    }
+    if (planning?.jours?.length === 7) { renderPlanning(planning); return; }
   }
   renderInventaire();
   showScreen('setup-screen');
@@ -504,19 +559,25 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('start-btn').addEventListener('click', startChat);
   document.getElementById('new-week-btn').addEventListener('click', startChat);
   document.getElementById('reset-week-btn').addEventListener('click', resetWeek);
+  document.getElementById('tonight-btn').addEventListener('click', openTonightModal);
+  document.getElementById('tonight-generate-btn').addEventListener('click', generateTonight);
+  document.getElementById('tonight-modal-close').addEventListener('click', () => closeModal('tonight-modal'));
+  document.getElementById('tonight-modal').addEventListener('click', e => { if (e.target.id==='tonight-modal') closeModal('tonight-modal'); });
   document.getElementById('chat-send').addEventListener('click', handleSend);
-  document.getElementById('chat-input').addEventListener('keydown', e => { if (e.key === 'Enter') handleSend(); });
-  document.getElementById('modal-close').addEventListener('click', closeModal);
-  document.getElementById('recipe-modal').addEventListener('click', e => { if (e.target.id === 'recipe-modal') closeModal(); });
+  document.getElementById('chat-input').addEventListener('keydown', e => { if(e.key==='Enter') handleSend(); });
+  document.getElementById('modal-close').addEventListener('click', () => closeModal('recipe-modal'));
+  document.getElementById('recipe-modal').addEventListener('click', e => { if(e.target.id==='recipe-modal') closeModal('recipe-modal'); });
   document.getElementById('copy-courses-btn').addEventListener('click', copyCourses);
   document.getElementById('inv-add-btn').addEventListener('click', addInvItem);
-  document.getElementById('inv-qty').addEventListener('keydown', e => { if (e.key === 'Enter') addInvItem(); });
+  document.getElementById('inv-clear-btn').addEventListener('click', clearInventaire);
+  document.getElementById('inv-qty').addEventListener('keydown', e => { if(e.key==='Enter') addInvItem(); });
   document.querySelectorAll('.tab').forEach(tab => {
     tab.addEventListener('click', () => {
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
       document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
       document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
+      if (tab.dataset.tab==='historique') renderHistorique();
     });
   });
 });

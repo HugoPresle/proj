@@ -3,21 +3,22 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Franck le Cuisto</title>
+  <title>Franck le Cuisto 🍳</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 </head>
 <body>
 
   <!-- SETUP -->
   <div id="setup-screen" class="screen hidden">
-    <div class="chalk-board">
-      <div class="chalk-deco">✦</div>
-      <h1 class="chalk-title">Franck<br>le Cuisto</h1>
-      <p class="chalk-sub">Ton assistant repas perso</p>
-      <div class="chalk-divider"></div>
-      <button id="start-btn" class="chalk-btn">Planifier ma semaine →</button>
+    <div class="setup-wrap">
+      <div class="setup-card">
+        <div class="setup-icon">🍳</div>
+        <h1 class="setup-title">Franck<br>le Cuisto</h1>
+        <p class="setup-sub">Ton assistant repas perso — simple, bon, sans prise de tête.</p>
+        <button id="start-btn" class="btn-primary">Planifier ma semaine →</button>
+      </div>
     </div>
   </div>
 
@@ -34,43 +35,62 @@
     </div>
   </div>
 
-  <!-- PLANNING -->
+  <!-- APP PRINCIPALE -->
   <div id="planning-screen" class="screen hidden">
     <header class="app-header">
-      <div class="header-left">
-        <h1 class="header-title">Franck le Cuisto</h1>
-        <span id="week-label" class="header-week"></span>
+      <div class="header-brand">
+        <span class="brand-icon">🍳</span>
+        <div>
+          <h1 class="brand-title">Franck le Cuisto</h1>
+          <span id="week-label" class="brand-week"></span>
+        </div>
       </div>
-      <div class="header-actions"><button id="new-week-btn" class="ghost-btn">+ Nouvelle semaine</button><button id="reset-week-btn" class="ghost-btn danger">↺ Recommencer</button></div>
+      <div class="header-actions">
+        <button id="tonight-btn" class="btn-tonight" title="Ce soir j'ai la flemme">⚡ Ce soir</button>
+        <button id="new-week-btn" class="btn-ghost">+ Semaine</button>
+        <button id="reset-week-btn" class="btn-ghost danger">↺ Recommencer</button>
+      </div>
     </header>
 
     <nav class="tabs">
-      <button class="tab active" data-tab="planning">Planning</button>
-      <button class="tab" data-tab="courses">Courses</button>
-      <button class="tab" data-tab="inventaire">Inventaire</button>
+      <button class="tab active" data-tab="planning">📅 Planning</button>
+      <button class="tab" data-tab="courses">🛒 Courses</button>
+      <button class="tab" data-tab="inventaire">📦 Inventaire</button>
+      <button class="tab" data-tab="historique">📖 Historique</button>
     </nav>
 
     <main class="app-main">
+
+      <!-- PLANNING TAB -->
       <section id="tab-planning" class="tab-content active">
-        <div id="days-grid" class="days-grid"></div>
+        <div id="agenda" class="agenda"></div>
       </section>
 
+      <!-- COURSES TAB -->
       <section id="tab-courses" class="tab-content">
-        <div id="courses-content" class="courses-content"></div>
-        <button id="copy-courses-btn" class="chalk-btn-sm">📋 Copier la liste</button>
+        <div id="courses-content"></div>
+        <button id="copy-courses-btn" class="btn-outline-full">📋 Copier la liste</button>
       </section>
 
+      <!-- INVENTAIRE TAB -->
       <section id="tab-inventaire" class="tab-content">
-        <div class="inventaire-header">
-          <p class="inventaire-hint">Ce que t'as chez toi. Mis à jour après les courses, consulté avant chaque planning.</p>
+        <div class="inv-toolbar">
+          <p class="inv-hint">Ce que t'as chez toi. Coché après les courses, lu avant chaque planning.</p>
+          <button id="inv-clear-btn" class="btn-danger-sm">Tout vider</button>
         </div>
-        <div id="inventaire-list" class="inventaire-list"></div>
-        <div class="inventaire-add">
+        <div id="inventaire-list"></div>
+        <div class="inv-add-row">
           <input type="text" id="inv-nom" placeholder="Article (ex: riz)" />
-          <input type="text" id="inv-qty" placeholder="Quantité (ex: 500g)" />
-          <button id="inv-add-btn" class="chalk-btn-sm">+ Ajouter</button>
+          <input type="text" id="inv-qty" placeholder="Quantité" />
+          <button id="inv-add-btn" class="btn-primary-sm">+ Ajouter</button>
         </div>
       </section>
+
+      <!-- HISTORIQUE TAB -->
+      <section id="tab-historique" class="tab-content">
+        <div id="historique-list" class="historique-list"></div>
+      </section>
+
     </main>
 
     <!-- MODAL RECETTE -->
@@ -78,6 +98,22 @@
       <div class="modal-card">
         <button id="modal-close" class="modal-close">✕</button>
         <div id="modal-content"></div>
+      </div>
+    </div>
+
+    <!-- MODAL CE SOIR -->
+    <div id="tonight-modal" class="modal-overlay hidden">
+      <div class="modal-card">
+        <button id="tonight-modal-close" class="modal-close">✕</button>
+        <div id="tonight-content">
+          <div class="tonight-header">
+            <span class="tonight-icon">⚡</span>
+            <h2 class="tonight-title">Ce soir j'ai la flemme</h2>
+            <p class="tonight-sub">Je te propose un truc rapide avec ce que t'as.</p>
+          </div>
+          <div id="tonight-result"></div>
+          <button id="tonight-generate-btn" class="btn-primary" style="width:100%;margin-top:1rem">Générer un repas rapide</button>
+        </div>
       </div>
     </div>
   </div>
