@@ -166,6 +166,28 @@ body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--
 .hist-plat { font-size: 0.75rem; background: var(--cream2); color: var(--text2); padding: 0.2rem 0.6rem; border-radius: 20px; }
 .hist-plat.liked { background: var(--green-light); color: var(--green); }
 .hist-plat.disliked { background: var(--red-light); color: var(--red); text-decoration: line-through; }
+.hist-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1.5px solid var(--border);
+}
+.hist-count { font-size: 0.82rem; color: var(--text2); }
+.hist-delete-btn {
+  background: transparent;
+  border: none;
+  color: var(--text3);
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+  line-height: 1;
+}
+.hist-delete-btn:hover { color: var(--red); background: var(--red-light); }
+
 .hist-empty { color: var(--text3); font-size: 0.85rem; text-align: center; padding: 2.5rem 0; font-style: italic; }
 
 /* ── MODAL ── */

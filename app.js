@@ -258,23 +258,43 @@ function saveToHistorique(data) {
   if (historique.length > 10) historique = historique.slice(0,10);
 }
 
+function deleteHistorique(idx) {
+  historique.splice(idx, 1);
+  renderHistorique();
+  persistAll();
+}
+
+function clearHistorique() {
+  if (!confirm('Supprimer tout l\'historique ?')) return;
+  historique = [];
+  renderHistorique();
+  persistAll();
+}
+
 function renderHistorique() {
   const el = document.getElementById('historique-list');
   if (!historique.length) { el.innerHTML = '<p class="hist-empty">Aucun historique pour l\'instant.</p>'; return; }
-  el.innerHTML = historique.map(h => `
-    <div class="hist-card">
-      <div class="hist-header">
-        <span class="hist-semaine">${h.semaine}</span>
-      </div>
-      <div class="hist-plats">
-        ${h.jours.map(j => {
-          const r = getRating(j.jour, j.plat);
-          const cls = r===1?' liked':r===-1?' disliked':'';
-          return `<span class="hist-plat${cls}">${r===1?'👍 ':r===-1?'👎 ':''}${j.plat}</span>`;
-        }).join('')}
-      </div>
+  el.innerHTML = `
+    <div class="hist-toolbar">
+      <span class="hist-count">${historique.length} semaine${historique.length>1?'s':''}</span>
+      <button class="btn-danger-sm" onclick="clearHistorique()">Tout supprimer</button>
     </div>
-  `).join('');
+    ${historique.map((h, idx) => `
+      <div class="hist-card">
+        <div class="hist-header">
+          <span class="hist-semaine">${h.semaine}</span>
+          <button class="hist-delete-btn" onclick="deleteHistorique(${idx})" title="Supprimer">✕</button>
+        </div>
+        <div class="hist-plats">
+          ${h.jours.map(j => {
+            const r = getRating(j.jour, j.plat);
+            const cls = r===1?' liked':r===-1?' disliked':'';
+            return `<span class="hist-plat${cls}">${r===1?'👍 ':r===-1?'👎 ':''}${j.plat}</span>`;
+          }).join('')}
+        </div>
+      </div>
+    `).join('')}
+  `;
 }
 
 // ── AGENDA ─────────────────────────────────────────────────────
