@@ -3,22 +3,25 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Franck le Cuisto 🍳</title>
+  <title>Franck le Cuisto</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 </head>
 <body>
 
+  <!-- SETUP -->
   <div id="setup-screen" class="screen hidden">
-    <div class="setup-card">
-      <div class="setup-logo">🍳</div>
-      <h1>Franck le Cuisto</h1>
-      <p>Ton assistant repas perso. On planifie la semaine ensemble.</p>
-      <button id="start-btn" class="btn-primary">Planifier ma semaine →</button>
+    <div class="chalk-board">
+      <div class="chalk-deco">✦</div>
+      <h1 class="chalk-title">Franck<br>le Cuisto</h1>
+      <p class="chalk-sub">Ton assistant repas perso</p>
+      <div class="chalk-divider"></div>
+      <button id="start-btn" class="chalk-btn">Planifier ma semaine →</button>
     </div>
   </div>
 
+  <!-- CHAT -->
   <div id="chat-screen" class="screen hidden">
     <div class="chat-header">
       <span class="chat-logo">🍳</span>
@@ -27,37 +30,50 @@
     <div id="chat-messages" class="chat-messages"></div>
     <div class="chat-input-wrap">
       <input type="text" id="chat-input" placeholder="Ta réponse..." autocomplete="off" />
-      <button id="chat-send" class="btn-send">↑</button>
+      <button id="chat-send" class="send-btn">↑</button>
     </div>
   </div>
 
+  <!-- PLANNING -->
   <div id="planning-screen" class="screen hidden">
     <header class="app-header">
       <div class="header-left">
-        <span class="header-logo">🍳</span>
-        <div>
-          <h1 class="header-title">Franck le Cuisto</h1>
-          <span id="week-label" class="header-week"></span>
-        </div>
+        <h1 class="header-title">Franck le Cuisto</h1>
+        <span id="week-label" class="header-week"></span>
       </div>
-      <button id="new-week-btn" class="btn-outline">Nouvelle semaine</button>
+      <button id="new-week-btn" class="ghost-btn">+ Nouvelle semaine</button>
     </header>
 
     <nav class="tabs">
       <button class="tab active" data-tab="planning">Planning</button>
       <button class="tab" data-tab="courses">Courses</button>
+      <button class="tab" data-tab="inventaire">Inventaire</button>
     </nav>
 
     <main class="app-main">
       <section id="tab-planning" class="tab-content active">
         <div id="days-grid" class="days-grid"></div>
       </section>
+
       <section id="tab-courses" class="tab-content">
         <div id="courses-content" class="courses-content"></div>
-        <button id="copy-courses-btn" class="btn-copy">📋 Copier la liste</button>
+        <button id="copy-courses-btn" class="chalk-btn-sm">📋 Copier la liste</button>
+      </section>
+
+      <section id="tab-inventaire" class="tab-content">
+        <div class="inventaire-header">
+          <p class="inventaire-hint">Ce que t'as chez toi. Mis à jour après les courses, consulté avant chaque planning.</p>
+        </div>
+        <div id="inventaire-list" class="inventaire-list"></div>
+        <div class="inventaire-add">
+          <input type="text" id="inv-nom" placeholder="Article (ex: riz)" />
+          <input type="text" id="inv-qty" placeholder="Quantité (ex: 500g)" />
+          <button id="inv-add-btn" class="chalk-btn-sm">+ Ajouter</button>
+        </div>
       </section>
     </main>
 
+    <!-- MODAL RECETTE -->
     <div id="recipe-modal" class="modal-overlay hidden">
       <div class="modal-card">
         <button id="modal-close" class="modal-close">✕</button>
@@ -66,10 +82,11 @@
     </div>
   </div>
 
+  <!-- LOADING -->
   <div id="loading-screen" class="screen hidden">
     <div class="loading-wrap">
-      <div class="loading-spinner"></div>
-      <p id="loading-text">Franck prépare ta semaine...</p>
+      <div class="loading-pan">🍳</div>
+      <p id="loading-text">En cuisine...</p>
     </div>
   </div>
 
