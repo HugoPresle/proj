@@ -189,18 +189,68 @@ function inventaireToText() {
   return inventaire.map(i => `- ${i.nom} : ${i.qty}`).join('\n');
 }
 
-// Quand les courses sont générées, proposer d'ajouter à l'inventaire
-function addCoursesToInventaire(courses) {
+// Cocher un article de course = l'ajouter à l'inventaire
+function toggleCourseItem(nom, prix, checked) {
+  if (checked) {
+    const exists = inventaire.find(i => i.nom.toLowerCase() === nom.toLowerCase());
+    if (!exists) {
+      inventaire.push({ nom, qty: '✓ acheté' });
+      renderInventaire();
+      persistAll();
+      console.log('🛒 [Franck] Ajouté à l\'inventaire:', nom);
+    }
+  } else {
+    // Décocher = retirer de l'inventaire si marqué "✓ acheté"
+    const idx = inventaire.findIndex(i => i.nom.toLowerCase() === nom.toLowerCase() && i.qty === '✓ acheté');
+    if (idx !== -1) {
+      inventaire.splice(idx, 1);
+      renderInventaire();
+      persistAll();
+    }
+  }
+}
+
+// Rendu des courses avec checkboxes
+function renderCourses(courses, total) {
+  const coursesEl = document.getElementById('courses-content');
+  coursesEl.innerHTML = '';
+
   courses.forEach(rayon => {
+    const block = document.createElement('div');
+    block.className = 'rayon-block';
+    block.innerHTML = `<div class="rayon-title">${rayon.rayon}</div>`;
     rayon.items.forEach(item => {
-      const exists = inventaire.find(i => i.nom.toLowerCase() === item.nom.toLowerCase());
-      if (!exists) {
-        inventaire.push({ nom: item.nom, qty: '—' });
-      }
+      const alreadyBought = inventaire.find(i => i.nom.toLowerCase() === item.nom.toLowerCase());
+      const row = document.createElement('div');
+      row.className = `course-item${alreadyBought ? ' done' : ''}`;
+      const checkId = `chk-${item.nom.replace(/\s+/g, '-')}`;
+      row.innerHTML = `
+        <label class="course-label" for="${checkId}">
+          <input type="checkbox" id="${checkId}" class="course-check" ${alreadyBought ? 'checked' : ''} />
+          <span class="course-check-box"></span>
+          <span class="course-nom">${item.nom}</span>
+        </label>
+        <span class="course-price">${item.prix}</span>
+      `;
+      const checkbox = row.querySelector('.course-check');
+      checkbox.addEventListener('change', () => {
+        toggleCourseItem(item.nom, item.prix, checkbox.checked);
+        row.classList.toggle('done', checkbox.checked);
+      });
+      block.appendChild(row);
     });
+    coursesEl.appendChild(block);
   });
-  renderInventaire();
-  persistAll();
+
+  const total_el = document.createElement('div');
+  total_el.className = 'courses-total';
+  total_el.innerHTML = `<span>Total estimé</span><span>${total}</span>`;
+  coursesEl.appendChild(total_el);
+}
+
+// Quand les courses sont générées (ne plus ajouter auto, c'est au clic maintenant)
+function addCoursesToInventaire(courses) {
+  // On ne fait plus rien ici — l'ajout se fait via les checkboxes
 }
 
 // ── PERSIST ────────────────────────────────────────────────────
@@ -237,25 +287,7 @@ function renderPlanning(data) {
     grid.appendChild(card);
   });
 
-  const coursesEl = document.getElementById('courses-content');
-  coursesEl.innerHTML = '';
-  data.courses.forEach(rayon => {
-    const block = document.createElement('div');
-    block.className = 'rayon-block';
-    block.innerHTML = `<div class="rayon-title">${rayon.rayon}</div>`;
-    rayon.items.forEach(item => {
-      const row = document.createElement('div');
-      row.className = 'course-item';
-      row.innerHTML = `<span>${item.nom}</span><span class="course-price">${item.prix}</span>`;
-      block.appendChild(row);
-    });
-    coursesEl.appendChild(block);
-  });
-
-  const total = document.createElement('div');
-  total.className = 'courses-total';
-  total.innerHTML = `<span>Total estimé</span><span>${data.total}</span>`;
-  coursesEl.appendChild(total);
+  renderCourses(data.courses, data.total);
 
   showScreen('planning-screen');
 }
@@ -327,7 +359,7 @@ async function handleSend() {
     // Q2 : affiche l'inventaire + pose la question
     const invText = inventaireToText();
     const q2msg = inventaire.length
-      ? `D'après ton inventaire, tu as :\n${invText}${Q2_SUFFIX}`
+      ? `Voilà ce que j'ai dans ton inventaire :\n${invText}\n\nJe vais en tenir compte pour ne pas te faire racheter des choses. Tu as autre chose qui n'est pas dans cette liste ?`
       : "Tu as quelque chose dans le frigo ou les placards ?";
     setTimeout(() => addMsg(q2msg, 'bot'), 400);
     conversationHistory.push({ role: 'assistant', content: q2msg });

@@ -340,6 +340,40 @@ body {
   font-size: 0.9rem;
 }
 .course-item:last-child { border-bottom: none; }
+.course-item.done .course-nom { text-decoration: line-through; opacity: 0.4; }
+.course-item.done .course-price { opacity: 0.4; }
+
+.course-label {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  cursor: pointer;
+  flex: 1;
+}
+.course-check { display: none; }
+.course-check-box {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  border: 1.5px solid var(--border);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, border-color 0.15s;
+  position: relative;
+}
+.course-check:checked + .course-check-box {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.course-check:checked + .course-check-box::after {
+  content: '✓';
+  color: #1A2018;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+.course-nom { font-size: 0.9rem; }
 .course-price {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.8rem;
