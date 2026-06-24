@@ -405,10 +405,13 @@ async function init() {
 
   renderInventaire();
   showScreen('setup-screen');
+}
 
-  // ── Events ──
+// ── Events (toujours bindés) ──────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('start-btn').addEventListener('click', startChat);
   document.getElementById('new-week-btn').addEventListener('click', startChat);
+  document.getElementById('reset-week-btn').addEventListener('click', resetWeek);
   document.getElementById('chat-send').addEventListener('click', handleSend);
   document.getElementById('chat-input').addEventListener('keydown', e => {
     if (e.key === 'Enter') handleSend();
@@ -430,6 +433,14 @@ async function init() {
       document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
     });
   });
+});
+
+function resetWeek() {
+  if (!confirm('Recommencer le planning de la semaine ? L\'inventaire reste intact.')) return;
+  currentData = null;
+  // Vider le planning du gist mais garder l'inventaire
+  saveToGist({ planning: null, inventaire });
+  startChat();
 }
 
 function startChat() {

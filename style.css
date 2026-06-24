@@ -57,7 +57,7 @@ body {
   opacity: 0.6;
 }
 .chalk-title {
-  font-family: 'Caveat', cursive;
+  font-family: 'Inter', sans-serif;
   font-size: 3.2rem;
   font-weight: 700;
   color: var(--chalk);
@@ -104,7 +104,7 @@ body {
 }
 .chat-logo { font-size: 1.4rem; }
 .chat-title {
-  font-family: 'Caveat', cursive;
+  font-family: 'Inter', sans-serif;
   font-weight: 700;
   font-size: 1.3rem;
   color: var(--chalk);
@@ -197,7 +197,7 @@ body {
 }
 .header-left { display: flex; flex-direction: column; gap: 2px; }
 .header-title {
-  font-family: 'Caveat', cursive;
+  font-family: 'Inter', sans-serif;
   font-weight: 700;
   font-size: 1.4rem;
   color: var(--chalk);
@@ -221,6 +221,9 @@ body {
   font-family: 'Inter', sans-serif;
 }
 .ghost-btn:hover { background: rgba(126,200,122,0.1); }
+.ghost-btn.danger { color: var(--red); border-color: var(--red); }
+.ghost-btn.danger:hover { background: rgba(224,112,96,0.1); }
+.header-actions { display: flex; gap: 0.5rem; }
 
 /* ── TABS ── */
 .tabs {
@@ -287,7 +290,7 @@ body {
   margin-bottom: 0.5rem;
 }
 .day-meal {
-  font-family: 'Caveat', cursive;
+  font-family: 'Inter', sans-serif;
   font-weight: 600;
   font-size: 1.15rem;
   color: var(--chalk);
@@ -497,7 +500,7 @@ body {
   margin-bottom: 0.3rem;
 }
 .modal-title {
-  font-family: 'Caveat', cursive;
+  font-family: 'Inter', sans-serif;
   font-weight: 700;
   font-size: 1.8rem;
   color: var(--chalk);
@@ -580,7 +583,7 @@ body {
   to { transform: rotate(12deg); }
 }
 #loading-text {
-  font-family: 'Caveat', cursive;
+  font-family: 'Inter', sans-serif;
   font-size: 1.3rem;
   color: var(--text2);
 }
