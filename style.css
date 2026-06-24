@@ -188,6 +188,111 @@ body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--
 .steps-list li:last-child { border-bottom: none; }
 .steps-list li::before { content: counter(steps); position: absolute; left: 0; top: 0.875rem; width: 24px; height: 24px; background: var(--warm); color: white; border-radius: 50%; font-size: 0.7rem; font-weight: 700; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; }
 .tip-box { background: var(--green-light); border-left: 3px solid var(--green); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: 0.75rem 1rem; font-size: 0.85rem; color: var(--brown2); margin-top: 1.25rem; }
+/* ── COACH PAR ÉTAPE ── */
+.steps-list li { position: relative; }
+.step-text { display: block; padding-right: 2rem; }
+.step-help-btn {
+  position: absolute;
+  top: 0.875rem;
+  right: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border2);
+  background: var(--cream);
+  color: var(--text3);
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  font-family: 'JetBrains Mono', monospace;
+  line-height: 1;
+}
+.step-help-btn:hover, .step-help-btn.active {
+  background: var(--warm);
+  border-color: var(--warm);
+  color: white;
+}
+.step-coach {
+  background: var(--warm-light);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-top: 0.75rem;
+  overflow: hidden;
+  animation: fadeUp 0.18s ease;
+}
+.step-coach-messages {
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.coach-msg {
+  padding: 0.6rem 0.875rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  line-height: 1.55;
+  max-width: 92%;
+}
+.coach-msg.bot {
+  background: var(--paper);
+  border: 1px solid var(--border);
+  align-self: flex-start;
+  border-bottom-left-radius: 3px;
+  color: var(--text);
+}
+.coach-msg.bot.loading {
+  color: var(--text3);
+  font-style: italic;
+}
+.coach-msg.bot.error { color: var(--red); }
+.coach-msg.user {
+  background: var(--warm);
+  color: white;
+  align-self: flex-end;
+  border-bottom-right-radius: 3px;
+}
+.step-coach-input {
+  display: flex;
+  gap: 0.4rem;
+  padding: 0.5rem 0.75rem;
+  border-top: 1px solid var(--border);
+  background: var(--paper);
+}
+.step-coach-field {
+  flex: 1;
+  background: var(--cream);
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  padding: 0.45rem 0.875rem;
+  font-size: 0.82rem;
+  color: var(--text);
+  outline: none;
+  font-family: 'Inter', sans-serif;
+  transition: border-color 0.15s;
+}
+.step-coach-field:focus { border-color: var(--warm); }
+.step-coach-field::placeholder { color: var(--text3); }
+.step-coach-send {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--warm);
+  color: white;
+  border: none;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.step-coach-send:hover { background: var(--warm2); }
+
 .modal-rating { display: flex; align-items: center; gap: 0.75rem; margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1.5px solid var(--border); }
 .modal-rating-label { font-size: 0.82rem; color: var(--text2); }
 .modal-rating-btns { display: flex; gap: 0.5rem; }

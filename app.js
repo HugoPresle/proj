@@ -41,6 +41,10 @@ Réponds UNIQUEMENT avec un JSON valide (pas de backticks) :
 {"plat":"Nom","flemme":false,"temps":"20 min","ingredients":[{"nom":"...","quantite":"...","dans_inventaire":false}],"etapes":["..."],"conseil":"..."}
 Règles : plat différent de l'actuel, utilise l'inventaire en priorité, 20-40 min ou 5-10 min si flemme.`;
 
+const COACH_PROMPT = `Tu es Franck le Cuisto, un ami sympa qui aide à cuisiner. Tu expliques une étape de recette de façon simple et encourageante, comme si t'étais à côté dans la cuisine.
+Réponds en 2-4 phrases max, langage familier et bienveillant, des conseils concrets et pratiques. Si on te pose une question précise, réponds directement à cette question.
+Contexte : recette en cours, étape spécifique fournie.`;
+
 const TONIGHT_PROMPT = `Franck a la flemme ce soir. Propose UN repas ultra-rapide (5-15 min max) avec ce qu'il a en inventaire.
 Réponds UNIQUEMENT avec un JSON valide (pas de backticks) :
 {"plat":"Nom","temps":"10 min","ingredients":[{"nom":"...","quantite":"..."}],"etapes":["..."],"conseil":"..."}`;
@@ -403,7 +407,19 @@ function openRecipe(jour) {
       <li><span>${i.nom}${i.dans_inventaire?'<span class="ing-stock">✓ stock</span>':''}</span><span class="ing-qty">${i.quantite}</span></li>
     `).join('')}</ul>
     <div class="modal-section-title">Préparation</div>
-    <ol class="steps-list">${jour.etapes.map(e=>`<li>${e}</li>`).join('')}</ol>
+    <ol class="steps-list">${jour.etapes.map((e,i)=>`
+      <li>
+        <span class="step-text">${e}</span>
+        <button class="step-help-btn" onclick="event.stopPropagation(); toggleStepCoach(this, '${jour.plat.replace(/'/g,"\\'")}', ${i}, \`${e.replace(/`/g,"\\`").replace(/'/g,"\\'")}  \`)">?</button>
+        <div class="step-coach hidden">
+          <div class="step-coach-messages"></div>
+          <div class="step-coach-input">
+            <input type="text" placeholder="Pose ta question à Franck..." class="step-coach-field" />
+            <button class="step-coach-send" onclick="askCoach(this)">↑</button>
+          </div>
+        </div>
+      </li>
+    `).join('')}</ol>
     ${jour.conseil?`<div class="tip-box">💡 ${jour.conseil}</div>`:''}
     <div class="modal-rating">
       <span class="modal-rating-label">Ce plat ?</span>
@@ -420,6 +436,59 @@ function openRecipe(jour) {
 function updateModalRating(btn, type) {
   document.querySelectorAll('.rating-modal-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
+}
+
+// ── COACH PAR ÉTAPE ────────────────────────────────────────────
+async function toggleStepCoach(btn, platNom, stepIdx, stepText) {
+  const coachEl = btn.nextElementSibling;
+  const isOpen = !coachEl.classList.contains('hidden');
+  if (isOpen) { coachEl.classList.add('hidden'); btn.classList.remove('active'); return; }
+  coachEl.classList.remove('hidden');
+  btn.classList.add('active');
+  // Si pas encore de message, générer l'explication initiale
+  const messagesEl = coachEl.querySelector('.step-coach-messages');
+  if (!messagesEl.children.length) {
+    await generateCoachMsg(messagesEl, platNom, stepText, null);
+  }
+  coachEl.querySelector('.step-coach-field').focus();
+}
+
+async function askCoach(sendBtn) {
+  const coachEl = sendBtn.closest('.step-coach');
+  const input = coachEl.querySelector('.step-coach-field');
+  const question = input.value.trim();
+  if (!question) return;
+  const messagesEl = coachEl.querySelector('.step-coach-messages');
+  const li = sendBtn.closest('li');
+  const stepText = li.querySelector('.step-text').textContent;
+  const platNom = document.querySelector('.modal-title')?.textContent || '';
+  // Afficher la question
+  const qDiv = document.createElement('div');
+  qDiv.className = 'coach-msg user';
+  qDiv.textContent = question;
+  messagesEl.appendChild(qDiv);
+  input.value = '';
+  await generateCoachMsg(messagesEl, platNom, stepText, question);
+}
+
+async function generateCoachMsg(messagesEl, platNom, stepText, question) {
+  const loadEl = document.createElement('div');
+  loadEl.className = 'coach-msg bot loading';
+  loadEl.textContent = '🍳 Franck réfléchit...';
+  messagesEl.appendChild(loadEl);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+  try {
+    const userMsg = question
+      ? `Recette : ${platNom}\nÉtape : ${stepText}\nQuestion : ${question}`
+      : `Recette : ${platNom}\nÉtape : ${stepText}\nExplique cette étape simplement pour un débutant.`;
+    const reply = await callAPI([{role:'user', content:userMsg}], COACH_PROMPT);
+    loadEl.className = 'coach-msg bot';
+    loadEl.textContent = reply;
+  } catch(e) {
+    loadEl.className = 'coach-msg bot error';
+    loadEl.textContent = 'Oups, réessaie !';
+  }
+  messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
 function closeModal(id) {
