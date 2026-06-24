@@ -61,6 +61,7 @@
       <button class="tab" data-tab="inventaire">📦 Inventaire</button>
       <button class="tab" data-tab="historique">📖 Historique</button>
       <button class="tab" data-tab="stats">📊 Stats</button>
+      <button class="tab" data-tab="prefs">⚙️ Préférences</button>
     </nav>
 
     <main class="app-main">
@@ -98,6 +99,38 @@
       <!-- STATS TAB -->
       <section id="tab-stats" class="tab-content">
         <div id="stats-content"></div>
+      </section>
+
+      <!-- PREFS TAB -->
+      <section id="tab-prefs" class="tab-content">
+        <div class="prefs-block">
+          <div class="prefs-header">
+            <span class="prefs-icon">🚫</span>
+            <div>
+              <h3 class="prefs-title">Allergènes</h3>
+              <p class="prefs-hint">Jamais dans aucune recette, quoi qu'il arrive.</p>
+            </div>
+          </div>
+          <div id="allergenes-list" class="prefs-list"></div>
+          <div class="prefs-add-row">
+            <input type="text" id="allergene-input" placeholder="Ex: gluten, lactose, arachides..." />
+            <button id="allergene-add-btn" class="btn-primary-sm">+ Ajouter</button>
+          </div>
+        </div>
+        <div class="prefs-block">
+          <div class="prefs-header">
+            <span class="prefs-icon">😬</span>
+            <div>
+              <h3 class="prefs-title">J'aime pas</h3>
+              <p class="prefs-hint">À éviter sauf si vraiment pas le choix.</p>
+            </div>
+          </div>
+          <div id="aimepas-list" class="prefs-list"></div>
+          <div class="prefs-add-row">
+            <input type="text" id="aimepas-input" placeholder="Ex: brocoli, foie, anchois..." />
+            <button id="aimepas-add-btn" class="btn-primary-sm">+ Ajouter</button>
+          </div>
+        </div>
       </section>
 
     </main>

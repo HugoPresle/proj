@@ -57,6 +57,7 @@ Si pas de quantité précise, mets "—".`;
 // ── STATE ──────────────────────────────────────────────────────
 let step = 0, answers = {}, conversationHistory = [], currentData = null;
 let inventaire = [], historique = [], ratings = {}, repaisFaits = {}, streak = 0;
+let allergenes = [], aimepas = [];
 
 // ── LOADING ────────────────────────────────────────────────────
 const MSGS = ["🐀 En train d'appâter Ratatouille...","🍅 Récolte des tomates...","🔪 Julienne de carottes...","🧅 Les oignons font pleurer...","🫕 Mijotage à feu doux...","🧄 Négociation avec l'ail...","🌿 Cueillette des herbes...","🍳 Chauffage de la poêle...","🥄 Goûtage qualité...","🧑‍🍳 Consultation des grimoires...","🛒 Passage au marché...","🥚 Comptage des œufs..."];
@@ -124,7 +125,7 @@ async function loadFromGist() {
 }
 
 async function persistAll() {
-  await saveToGist({ planning: currentData, inventaire, historique, ratings, repaisFaits, streak });
+  await saveToGist({ planning: currentData, inventaire, historique, ratings, repaisFaits, streak, allergenes, aimepas });
 }
 
 // ── INVENTAIRE ─────────────────────────────────────────────────
@@ -303,15 +304,55 @@ function getTodayDay() {
   return days[new Date().getDay()];
 }
 
+function getWeekDays() {
+  const dayNames = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+  const ordered = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+  const today = new Date();
+  const todayName = dayNames[today.getDay()];
+  const startIdx = ordered.indexOf(todayName);
+
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() + i);
+    const name = ordered[(startIdx + i) % 7];
+    const dd = String(d.getDate()).padStart(2,'0');
+    const mm = String(d.getMonth()+1).padStart(2,'0');
+    days.push({ jour: name, date: `${dd}/${mm}`, full: d });
+  }
+  return days;
+}
+
+function getWeekLabel() {
+  const days = getWeekDays();
+  return `Semaine du ${days[0].date} au ${days[6].date}`;
+}
+
+function getWeekPromptText() {
+  const days = getWeekDays();
+  const lines = days.map(d => `- ${d.jour} ${d.date}`).join('\n');
+  return `La semaine à planifier est :\n${lines}\nUtilise EXACTEMENT ces jours et ces dates dans le JSON.`;
+}
+
 function getDayNum(jourNom, semaine) {
   try {
-    const match = semaine.match(/(\d+)\/(\d+)/);
-    if (!match) return '';
+    // Cherche toutes les dates dans la semaine "du JJ/MM au JJ/MM"
+    const matches = semaine.match(/(\d{2}\/\d{2})/g);
+    if (!matches || matches.length < 2) return '';
     const days = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
-    const idx = days.indexOf(jourNom);
-    if (idx === -1) return '';
-    const startDay = parseInt(match[1]);
-    return String(startDay + idx).padStart(2,'0');
+    // Trouver le jour de départ depuis le label
+    const startParts = matches[0].split('/');
+    const startDate = new Date();
+    startDate.setDate(parseInt(startParts[0]));
+    startDate.setMonth(parseInt(startParts[1])-1);
+    const startDayName = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'][startDate.getDay()];
+    const startIdx = days.indexOf(startDayName);
+    const jourIdx = days.indexOf(jourNom);
+    if (startIdx === -1 || jourIdx === -1) return '';
+    const offset = (jourIdx - startIdx + 7) % 7;
+    const d = new Date(startDate);
+    d.setDate(startDate.getDate() + offset);
+    return String(d.getDate()).padStart(2,'0');
   } catch(e) { return ''; }
 }
 
@@ -459,6 +500,53 @@ function openRecipe(jour) {
 function updateModalRating(btn, type) {
   document.querySelectorAll('.rating-modal-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
+}
+
+// ── PRÉFÉRENCES ────────────────────────────────────────────────
+function renderPrefs() {
+  renderPrefList('allergenes-list', allergenes, 'allergenes');
+  renderPrefList('aimepas-list', aimepas, 'aimepas');
+}
+
+function renderPrefList(elId, list, type) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  if (!list.length) {
+    el.innerHTML = `<p class="prefs-empty">Aucun élément. Ajoute ce que tu veux éviter !</p>`;
+    return;
+  }
+  el.innerHTML = list.map((item, i) => `
+    <div class="prefs-item">
+      <span class="prefs-item-name">${item}</span>
+      <button class="inv-btn del" onclick="deletePref('${type}', ${i})">✕</button>
+    </div>
+  `).join('');
+}
+
+function addPref(type) {
+  const inputId = type === 'allergenes' ? 'allergene-input' : 'aimepas-input';
+  const input = document.getElementById(inputId);
+  const val = input.value.trim();
+  if (!val) return;
+  const list = type === 'allergenes' ? allergenes : aimepas;
+  if (!list.includes(val.toLowerCase())) list.push(val.toLowerCase());
+  input.value = '';
+  renderPrefs();
+  persistAll();
+}
+
+function deletePref(type, i) {
+  if (type === 'allergenes') allergenes.splice(i, 1);
+  else aimepas.splice(i, 1);
+  renderPrefs();
+  persistAll();
+}
+
+function prefsToPromptText() {
+  let txt = '';
+  if (allergenes.length) txt += `\nALLERGÈNES (JAMAIS dans aucune recette) : ${allergenes.join(', ')}`;
+  if (aimepas.length) txt += `\nN'AIME PAS (à éviter autant que possible) : ${aimepas.join(', ')}`;
+  return txt;
 }
 
 // ── REPAS FAITS & STREAK ───────────────────────────────────────
@@ -841,7 +929,9 @@ async function handleSend() {
     try {
       const badRatings = Object.entries(ratings).filter(([,v])=>v===-1).map(([k])=>k.split('__')[1]);
       const ratingHint = badRatings.length ? `\nPlats que Franck n'a pas aimés (à éviter) : ${badRatings.join(', ')}` : '';
-      const finalMsg = `Budget: ${answers.budget}\nInventaire:\n${inventaireToText()}\nAutre: ${answers.placards}\nÀ éviter: ${answers.eviter}${ratingHint}\n\nGénère le planning JSON.`;
+      const prefsHint = prefsToPromptText();
+      const weekText = getWeekPromptText();
+      const finalMsg = `${weekText}\n\nBudget: ${answers.budget}\nInventaire:\n${inventaireToText()}\nAutre: ${answers.placards}\nÀ éviter cette semaine: ${answers.eviter}${prefsHint}${ratingHint}\n\nGénère le planning JSON.`;
       conversationHistory.push({role:'user',content:finalMsg});
       const reply = await callAPI(conversationHistory);
       const data = parseJSON(reply);
@@ -895,10 +985,13 @@ async function init() {
     if (saved.ratings) ratings = saved.ratings;
     if (saved.repaisFaits) repaisFaits = saved.repaisFaits;
     if (saved.streak) streak = saved.streak;
+    if (saved.allergenes) allergenes = saved.allergenes;
+    if (saved.aimepas) aimepas = saved.aimepas;
     const planning = saved.planning || (saved.jours ? saved : null);
     if (planning?.jours?.length === 7) { renderPlanning(planning); return; }
   }
   renderInventaire();
+  renderPrefs();
   showScreen('setup-screen');
 }
 
@@ -922,6 +1015,11 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('inv-add-btn').addEventListener('click', addInvItem);
   document.getElementById('inv-clear-btn').addEventListener('click', clearInventaire);
   document.getElementById('inv-qty').addEventListener('keydown', e => { if(e.key==='Enter') addInvItem(); });
+  document.getElementById('allergene-add-btn').addEventListener('click', () => addPref('allergenes'));
+  document.getElementById('aimepas-add-btn').addEventListener('click', () => addPref('aimepas'));
+  document.getElementById('allergene-input').addEventListener('keydown', e => { if(e.key==='Enter') addPref('allergenes'); });
+  document.getElementById('aimepas-input').addEventListener('keydown', e => { if(e.key==='Enter') addPref('aimepas'); });
+
   document.querySelectorAll('.tab').forEach(tab => {
     tab.addEventListener('click', () => {
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -930,6 +1028,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
       if (tab.dataset.tab==='historique') renderHistorique();
       if (tab.dataset.tab==='stats') { renderStats(); recalcStreak(); }
+      if (tab.dataset.tab==='prefs') renderPrefs();
     });
   });
 });
