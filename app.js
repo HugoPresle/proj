@@ -88,7 +88,10 @@ async function callAPI(messages) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ system: SYSTEM_PROMPT, messages })
   });
-  const data = await res.json();
+  console.log('Status:', res.status);
+  const text = await res.text();
+  console.log('Réponse brute:', text);
+  const data = JSON.parse(text);
   return data.content?.[0]?.text || '';
 }
 
